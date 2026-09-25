@@ -1,0 +1,2982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>WAPA Trainer</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WAPA Trainer">
+<meta name="theme-color" content="#070f1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-950:#070f1c;
+    --navy-900:#0a1628;
+    --navy-800:#0f2138;
+    --navy-700:#16304f;
+    --navy-600:#1e4066;
+    --line:#20395c;
+    --amber:#ffb400;
+    --amber-dim:#8a6a1f;
+    --cyan:#5fd8ee;
+    --ink:#edf2f7;
+    --muted:#8ca3bf;
+    --good:#3ecf8e;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--navy-950);color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',system-ui,sans-serif}
+
+  /* ---------- HUB ---------- */
+  #hub{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+  .hero{
+    position:relative;padding:28px 24px 26px;border-radius:20px;margin-bottom:22px;
+    background:
+      radial-gradient(120% 160% at 100% 0%, rgba(95,216,238,.12), transparent 55%),
+      linear-gradient(160deg, var(--navy-800), var(--navy-900));
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";position:absolute;right:-40px;top:-40px;width:220px;height:220px;
+    background:radial-gradient(circle, rgba(255,180,0,.10), transparent 70%);
+    pointer-events:none;
+  }
+  .kicker{font-size:12px;letter-spacing:.14em;color:var(--amber);font-weight:600;margin:0 0 10px}
+  .hero h1{font-size:clamp(26px,4.6vw,36px);line-height:1.12;margin:0 0 10px;font-weight:700}
+  .hero p{margin:0;color:var(--muted);max-width:56ch;font-size:15px;line-height:1.55}
+  .hero-meta{display:flex;gap:18px;margin-top:18px;flex-wrap:wrap}
+  .hero-stat{display:flex;flex-direction:column;gap:2px}
+  .hero-stat b{font-family:'Space Grotesk',sans-serif;font-size:20px;color:var(--cyan)}
+  .hero-stat span{font-size:11px;color:var(--muted);letter-spacing:.04em}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+  .card{
+    position:relative;text-align:left;border:1px solid var(--line);border-radius:16px;
+    background:linear-gradient(180deg, var(--navy-800), var(--navy-900));
+    padding:18px 18px 16px;cursor:pointer;transition:border-color .15s ease, transform .15s ease;
+    display:flex;flex-direction:column;gap:10px;color:inherit;
+  }
+  .card:hover{border-color:var(--navy-600);transform:translateY(-2px)}
+  .card:active{transform:translateY(0)}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .card-icon{
+    width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;
+    background:rgba(255,180,0,.10);color:var(--amber);
+  }
+  .card-icon svg{width:20px;height:20px}
+  .card-tag{font-size:10.5px;letter-spacing:.08em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 9px;white-space:nowrap}
+  .card h3{font-size:17px;margin:0;font-weight:700}
+  .card p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
+  .card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px}
+  .card-spec{font-size:12px;color:var(--muted)}
+  .launch{font-size:12.5px;font-weight:600;color:var(--navy-950);background:var(--amber);border-radius:8px;padding:7px 12px}
+
+  footer.note{margin-top:26px;color:var(--muted);font-size:12px;line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+
+  /* ---------- PLAYER (fullscreen) ---------- */
+  #player{position:fixed;inset:0;background:var(--navy-950);display:none;flex-direction:column;z-index:50}
+  #player.active{display:flex}
+  .player-bar{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;
+    padding-top:calc(10px + env(safe-area-inset-top,0px));
+    background:var(--navy-900);border-bottom:1px solid var(--line);flex:0 0 auto;
+  }
+  .back-btn{
+    appearance:none;border:1px solid var(--line);background:var(--navy-800);color:var(--ink);
+    border-radius:10px;padding:8px 12px;font-weight:600;font-size:13px;cursor:pointer;
+    display:flex;align-items:center;gap:6px;
+  }
+  .back-btn:active{background:var(--navy-700)}
+  .player-title{font-size:13px;color:var(--muted);font-weight:600}
+  #gameFrame{flex:1 1 auto;width:100%;border:0;background:#fff}
+
+  textarea.payload{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+  @media (prefers-color-scheme: light){
+    :root{ }
+  }
+</style>
+</head>
+<body>
+
+<div id="hub">
+  <div class="hero">
+    <p class="kicker">WAPA SELECTION PREP</p>
+    <h1>Trainer</h1>
+    <p>Six practice modules built around the categories tested at the WAPA selection stage — mental arithmetic, memory, concentration, analytical thinking, and spatial orientation. Pick one to start.</p>
+    <div class="hero-meta">
+      <div class="hero-stat"><b>6</b><span>MODULES</span></div>
+      <div class="hero-stat"><b id="statLast">—</b><span>LAST SESSION</span></div>
+    </div>
+  </div>
+
+  <div class="grid" id="cardGrid"></div>
+
+  <footer class="note">Independent practice tools built for personal study. Not official WAPA material and not affiliated with or endorsed by WAPA.</footer>
+</div>
+
+<div id="player">
+  <div class="player-bar">
+    <button class="back-btn" id="backBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Hub
+    </button>
+    <div class="player-title" id="playerTitle"></div>
+  </div>
+  <iframe id="gameFrame" title="module"></iframe>
+</div>
+
+<textarea class="payload" id="payload-arith">&lt;!DOCTYPE html>
+&lt;html lang="en">
+&lt;head>
+  &lt;meta charset="UTF-8" />
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  &lt;title>Mental Arithmetic Challenge&lt;/title>
+  &lt;style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --panel-2: #ffffff;
+      --text: #171a21;
+      --muted: #6e7787;
+      --accent: #4067E8;
+      --accent-2: #5d7ff0;
+      --danger: #d9534f;
+      --success: #2f9e62;
+      --border: #d9dee8;
+      --shadow: 0 16px 40px rgba(26, 32, 44, .08);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(64,103,232,.08), transparent 28%),
+        linear-gradient(180deg, #f9fbff 0%, #f3f5f9 100%);
+      color: var(--text);
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 980px;
+      min-height: 700px;
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.82);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .brand-badge {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 18px rgba(64,103,232,.65);
+    }
+
+    .shell {
+      padding: 34px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,251,254,.98));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 24px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(64,103,232,.7);
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.05;
+      letter-spacing: -.03em;
+      margin-bottom: 16px;
+    }
+
+    .hero-subtitle {
+      font-size: 1.08rem;
+      line-height: 1.65;
+      color: var(--muted);
+      max-width: 60ch;
+    }
+
+    .rules {
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .rule {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,.82);
+    }
+
+    .rule-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      font-weight: 700;
+      background: rgba(64,103,232,.16);
+      color: #dfe7ff;
+      border: 1px solid rgba(64,103,232,.3);
+    }
+
+    .rule strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: .98rem;
+    }
+
+    .rule span {
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: .95rem;
+    }
+
+    .side-card {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .stat-box {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,.82);
+    }
+
+    .stat-label {
+      font-size: .8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .13em;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 1.9rem;
+      font-weight: 800;
+      letter-spacing: -.04em;
+    }
+
+    .mode-switch {
+      display: grid;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .mode-option {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: .2s ease;
+      background: rgba(255,255,255,.82);
+    }
+
+    .mode-option:hover {
+      border-color: rgba(64,103,232,.45);
+      transform: translateY(-1px);
+    }
+
+    .mode-option input {
+      display: none;
+    }
+
+    .mode-option.active {
+      border-color: rgba(64,103,232,.55);
+      background: rgba(64,103,232,.08);
+      box-shadow: inset 0 0 0 1px rgba(64,103,232,.22);
+    }
+
+    .mode-title {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .mode-desc {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: .92rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    button {
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .18s ease, opacity .18s ease, background .18s ease;
+      font-size: 1rem;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      padding: 14px 20px;
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 14px 20px;
+    }
+
+    .stage {
+      display: none;
+    }
+
+    .stage.active {
+      display: block;
+    }
+
+    .quiz-layout {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .question-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .93rem;
+    }
+
+    .question-area {
+      display: grid;
+      align-content: center;
+      min-height: 360px;
+      text-align: center;
+    }
+
+    .listen-text {
+      color: var(--muted);
+      font-size: .96rem;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      margin-bottom: 12px;
+    }
+
+    .question-display {
+      font-size: clamp(2.4rem, 6vw, 4.4rem);
+      line-height: 1.05;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      margin-bottom: 18px;
+      min-height: 1.1em;
+    }
+
+    .helper-text {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 44ch;
+      margin: 0 auto;
+    }
+
+    .answer-panel {
+      display: grid;
+      align-content: start;
+      gap: 18px;
+    }
+
+    .timer-wrap {
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.82);
+    }
+
+    .timer-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px 8px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .timer-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: #e9edf5;
+      overflow: hidden;
+    }
+
+    .timer-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--success), var(--accent));
+      transition: width 1s linear;
+      transform-origin: left center;
+    }
+
+    .input-card {
+      padding: 22px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.82);
+      border-radius: 20px;
+    }
+
+    .input-label {
+      font-size: .82rem;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .answer-input {
+      width: 100%;
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid #cfd6e3;
+      border-radius: 16px;
+      padding: 16px 18px;
+      font-size: 2rem;
+      font-weight: 700;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
+      text-align: center;
+    }
+
+    .answer-input:focus {
+      border-color: rgba(64,103,232,.85);
+      box-shadow: 0 0 0 4px rgba(64,103,232,.15);
+    }
+
+    .answer-note {
+      margin-top: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: .94rem;
+    }
+
+    .feedback {
+      min-height: 26px;
+      font-weight: 700;
+      letter-spacing: .01em;
+    }
+
+    .feedback.correct { color: var(--success); }
+    .feedback.wrong { color: var(--danger); }
+
+    .small-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .results-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 22px 0 8px;
+    }
+
+    .score-ring {
+      width: 280px;
+      height: 280px;
+      margin: 24px auto;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,1) 66%, transparent 67%),
+        conic-gradient(var(--accent) var(--percent), rgba(255,255,255,.08) 0);
+      border: 1px solid var(--border);
+      box-shadow: 0 16px 40px rgba(0,0,0,.28);
+    }
+
+    .score-inner {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      width: 100%;
+      max-width: 170px;
+      text-align: center;
+      padding: 0 10px;
+    }
+
+    .percent-big {
+      font-size: 4rem;
+      font-weight: 900;
+      letter-spacing: -.06em;
+      line-height: .95;
+    }
+
+    .score-sub {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.35;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .result-box {
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.82);
+    }
+
+    .result-box .k {
+      font-size: .78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      margin-bottom: 8px;
+    }
+
+    .result-box .v {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -.04em;
+    }
+
+    .review-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 24px;
+      text-align: left;
+    }
+
+    .review-item {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.82);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .review-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-weight: 700;
+    }
+
+    .review-meta {
+      color: var(--muted);
+      font-size: .95rem;
+      line-height: 1.5;
+    }
+
+    .review-status.correct { color: var(--success); }
+    .review-status.wrong { color: var(--danger); }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 880px) {
+      .grid,
+      .quiz-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .shell {
+        padding: 20px;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .score-ring {
+        width: 240px;
+        height: 240px;
+      }
+
+      .score-inner {
+        max-width: 150px;
+      }
+
+      .percent-big {
+        font-size: 3.3rem;
+      }
+
+      .topbar {
+        padding: 16px 18px;
+      }
+
+      .question-area {
+        min-height: 240px;
+      }
+    }
+  &lt;/style>
+&lt;/head>
+&lt;body>
+  &lt;div class="app">
+    &lt;div class="topbar">
+      &lt;div class="brand">
+        &lt;span class="brand-badge">&lt;/span>
+        &lt;span>Mental Arithmetic Challenge&lt;/span>
+      &lt;/div>
+      &lt;div class="muted" id="voiceStatus">Voice ready&lt;/div>
+    &lt;/div>
+
+    &lt;div class="shell">
+      &lt;section id="startStage" class="stage active">
+        &lt;div class="grid">
+          &lt;div class="card">
+            &lt;div class="eyebrow">Mental Speed Test&lt;/div>
+            &lt;h1 class="hero-title">Hear it once. Solve it in your head. Type the integer answer.&lt;/h1>
+            &lt;p class="hero-subtitle">
+              This game follows the psychometric-style rules from your reference:
+              20 questions, 20 seconds per question, and scoring is based only on the number
+              of correct answers. The final screen shows your score and percentage.
+            &lt;/p>
+
+            &lt;div class="rules">
+              &lt;div class="rule">
+                &lt;div class="rule-num">1&lt;/div>
+                &lt;div>
+                  &lt;strong>20 questions&lt;/strong>
+                  &lt;span>Each question expects one final integer answer.&lt;/span>
+                &lt;/div>
+              &lt;/div>
+
+              &lt;div class="rule">
+                &lt;div class="rule-num">2&lt;/div>
+                &lt;div>
+                  &lt;strong>20 seconds per question&lt;/strong>
+                  &lt;span>If time runs out, the question is marked wrong and the game moves on.&lt;/span>
+                &lt;/div>
+              &lt;/div>
+
+              &lt;div class="rule">
+                &lt;div class="rule-num">3&lt;/div>
+                &lt;div>
+                  &lt;strong>Mental calculation only&lt;/strong>
+                  &lt;span>No calculator, no paper, and no repeated voice playback during the round.&lt;/span>
+                &lt;/div>
+              &lt;/div>
+
+              &lt;div class="rule">
+                &lt;div class="rule-num">4&lt;/div>
+                &lt;div>
+                  &lt;strong>Score = correct answers only&lt;/strong>
+                  &lt;span>No bonuses for speed. No partial credit. Final percentage is shown at the end.&lt;/span>
+                &lt;/div>
+              &lt;/div>
+            &lt;/div>
+
+            &lt;div class="controls">
+              &lt;button class="btn-primary" id="startBtn">Start Game&lt;/button>
+              &lt;button class="btn-secondary" id="speakTestBtn">Test Voice&lt;/button>
+            &lt;/div>
+          &lt;/div>
+
+          &lt;div class="side-card">
+            &lt;div class="card">
+              &lt;div class="stat-box">
+                &lt;div class="stat-label">Default Format&lt;/div>
+                &lt;div class="stat-value">20 × 20&lt;/div>
+                &lt;div class="muted">20 questions · 20 seconds each&lt;/div>
+              &lt;/div>
+
+              &lt;div class="stat-box">
+                &lt;div class="stat-label">Question Mode&lt;/div>
+                &lt;div class="mode-switch">
+                  &lt;label class="mode-option active" data-mode="voice-only">
+                    &lt;input type="radio" name="mode" value="voice-only" checked />
+                    &lt;div class="mode-title">Real Test&lt;/div>
+                    &lt;div class="mode-desc">Each question uses only one operation. The expression stays hidden.&lt;/div>
+                  &lt;/label>
+
+                  &lt;label class="mode-option" data-mode="voice-and-text">
+                    &lt;input type="radio" name="mode" value="voice-and-text" />
+                    &lt;div class="mode-title">Practice&lt;/div>
+                    &lt;div class="mode-desc">Each question uses only one operation and is also shown on screen.&lt;/div>
+                  &lt;/label>
+                &lt;/div>
+              &lt;/div>
+
+              &lt;div class="stat-box">
+                &lt;div class="stat-label">Audio Tip&lt;/div>
+                &lt;div class="muted">
+                  Use a browser tab with sound enabled. The game uses your browser’s built-in speech synthesis.
+                &lt;/div>
+              &lt;/div>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/section>
+
+      &lt;section id="quizStage" class="stage">
+        &lt;div class="question-meta">
+          &lt;div class="pill" id="progressPill">Question 1 / 20&lt;/div>
+          &lt;div class="pill" id="scorePill">Correct: 0&lt;/div>
+          &lt;div class="pill" id="modePill">Mode: Real Test&lt;/div>
+        &lt;/div>
+
+        &lt;div class="quiz-layout">
+          &lt;div class="card">
+            &lt;div class="question-area">
+              &lt;div class="listen-text">Listen carefully&lt;/div>
+              &lt;div class="question-display" id="questionDisplay">...&lt;/div>
+              &lt;p class="helper-text" id="helperText">
+                Each question uses one simple operation only. Work it out mentally, then type the final integer result.
+              &lt;/p>
+            &lt;/div>
+          &lt;/div>
+
+          &lt;div class="answer-panel">
+            &lt;div class="timer-wrap">
+              &lt;div class="timer-head">
+                &lt;span>Time remaining&lt;/span>
+                &lt;strong id="timeText">20s&lt;/strong>
+              &lt;/div>
+              &lt;div class="timer-bar-bg">
+                &lt;div class="timer-bar" id="timerBar">&lt;/div>
+              &lt;/div>
+            &lt;/div>
+
+            &lt;div class="input-card">
+              &lt;div class="input-label">Your answer&lt;/div>
+              &lt;input
+                id="answerInput"
+                class="answer-input"
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="0"
+                aria-label="Type your answer"
+              />
+              &lt;div class="answer-note">
+                Enter an integer only. Press &lt;strong>Enter&lt;/strong> or use the submit button.
+              &lt;/div>
+            &lt;/div>
+
+            &lt;div class="feedback" id="feedback">&lt;/div>
+
+            &lt;div class="small-actions">
+              &lt;button class="btn-primary" id="submitBtn">Submit Answer&lt;/button>
+              &lt;button class="btn-secondary" id="skipBtn">Skip Question&lt;/button>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/section>
+
+      &lt;section id="resultsStage" class="stage">
+        &lt;div class="card results-wrap">
+          &lt;div class="eyebrow">Test Complete&lt;/div>
+          &lt;h2 class="hero-title" style="font-size: clamp(2.2rem, 5vw, 3.2rem);">Final Result&lt;/h2>
+          &lt;p class="hero-subtitle" style="margin: 0 auto;">
+            Your result is based only on the number of correct answers out of 20.
+          &lt;/p>
+
+          &lt;div class="score-ring" id="scoreRing" style="--percent: 0deg;">
+            &lt;div class="score-inner">
+              &lt;div class="percent-big" id="percentBig">0%&lt;/div>
+              &lt;div class="score-sub hidden" id="scoreSub" aria-hidden="true">&lt;/div>
+            &lt;/div>
+          &lt;/div>
+
+          &lt;div class="results-grid">
+            &lt;div class="result-box">
+              &lt;div class="k">Correct&lt;/div>
+              &lt;div class="v" id="correctCount">0&lt;/div>
+            &lt;/div>
+            &lt;div class="result-box">
+              &lt;div class="k">Wrong&lt;/div>
+              &lt;div class="v" id="wrongCount">0&lt;/div>
+            &lt;/div>
+            &lt;div class="result-box">
+              &lt;div class="k">Percentage&lt;/div>
+              &lt;div class="v" id="percentBox">0%&lt;/div>
+            &lt;/div>
+          &lt;/div>
+
+          &lt;div class="controls" style="justify-content:center;">
+            &lt;button class="btn-primary" id="playAgainBtn">Play Again&lt;/button>
+          &lt;/div>
+
+          &lt;div class="review-list" id="reviewList">&lt;/div>
+        &lt;/div>
+      &lt;/section>
+    &lt;/div>
+  &lt;/div>
+
+  &lt;script>
+    const TOTAL_QUESTIONS = 20;
+    const TIME_PER_QUESTION = 20;
+
+    const state = {
+      mode: "voice-only",
+      questionIndex: 0,
+      correct: 0,
+      questions: [],
+      timer: null,
+      timeLeft: TIME_PER_QUESTION,
+      questionActive: false,
+      voices: [],
+      preferredVoice: null
+    };
+
+    const startStage = document.getElementById("startStage");
+    const quizStage = document.getElementById("quizStage");
+    const resultsStage = document.getElementById("resultsStage");
+
+    const startBtn = document.getElementById("startBtn");
+    const speakTestBtn = document.getElementById("speakTestBtn");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+
+    const progressPill = document.getElementById("progressPill");
+    const scorePill = document.getElementById("scorePill");
+    const modePill = document.getElementById("modePill");
+    const questionDisplay = document.getElementById("questionDisplay");
+    const helperText = document.getElementById("helperText");
+    const timeText = document.getElementById("timeText");
+    const timerBar = document.getElementById("timerBar");
+    const answerInput = document.getElementById("answerInput");
+    const feedback = document.getElementById("feedback");
+    const submitBtn = document.getElementById("submitBtn");
+    const skipBtn = document.getElementById("skipBtn");
+    const voiceStatus = document.getElementById("voiceStatus");
+
+    const percentBig = document.getElementById("percentBig");
+    const scoreSub = document.getElementById("scoreSub");
+    const correctCount = document.getElementById("correctCount");
+    const wrongCount = document.getElementById("wrongCount");
+    const percentBox = document.getElementById("percentBox");
+    const reviewList = document.getElementById("reviewList");
+    const scoreRing = document.getElementById("scoreRing");
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function choice(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function safeDividePair() {
+      const divisor = randInt(2, 12);
+      const quotient = randInt(2, 25);
+      return { a: divisor * quotient, b: divisor };
+    }
+
+    function toSpokenToken(token) {
+      if (token === "+") return "plus";
+      if (token === "-") return "minus";
+      if (token === "*") return "times";
+      if (token === "/") return "divided by";
+      return String(token);
+    }
+
+    function tokensToSpeech(tokens) {
+      return tokens.map(toSpokenToken).join(" ");
+    }
+
+    function tokensToDisplay(tokens) {
+      return tokens.join(" ");
+    }
+
+    function evaluateTokens(tokens) {
+      const expr = tokens.join(" ");
+      return Function('"use strict"; return (' + expr + ')')();
+    }
+
+    function generateAddition() {
+      const a = randInt(6, 180);
+      const b = randInt(6, 180);
+      const tokens = [a, "+", b];
+      return {
+        display: tokensToDisplay(tokens),
+        speech: tokensToSpeech(tokens),
+        answer: a + b
+      };
+    }
+
+    function generateSubtraction() {
+      const a = randInt(30, 250);
+      const b = randInt(5, a - 2);
+      const tokens = [a, "-", b];
+      return {
+        display: tokensToDisplay(tokens),
+        speech: tokensToSpeech(tokens),
+        answer: a - b
+      };
+    }
+
+    function generateMultiplication() {
+      const a = randInt(3, 16);
+      const b = randInt(3, 16);
+      const tokens = [a, "*", b];
+      return {
+        display: tokensToDisplay(tokens),
+        speech: tokensToSpeech(tokens),
+        answer: a * b
+      };
+    }
+
+    function generateDivision() {
+      const pair = safeDividePair();
+      const tokens = [pair.a, "/", pair.b];
+      return {
+        display: tokensToDisplay(tokens),
+        speech: tokensToSpeech(tokens),
+        answer: pair.a / pair.b
+      };
+    }
+
+    function generateSquare() {
+      const n = randInt(2, 20);
+      return {
+        display: `${n}²`,
+        speech: `${n} squared`,
+        answer: n * n
+      };
+    }
+
+    function generateCube() {
+      const n = randInt(2, 10);
+      return {
+        display: `${n}³`,
+        speech: `${n} cubed`,
+        answer: n * n * n
+      };
+    }
+
+    function generateSimpleLog() {
+      const base = choice([2, 3, 10]);
+      let exponent;
+      if (base === 2) exponent = randInt(1, 6);
+      else if (base === 3) exponent = randInt(1, 4);
+      else exponent = choice([1, 2, 3]);
+      const value = base ** exponent;
+      return {
+        display: `log${base}(${value})`,
+        speech: `log base ${base} of ${value}`,
+        answer: exponent
+      };
+    }
+
+    function generateQuestion(index) {
+      const earlyPool = [
+        generateAddition,
+        generateSubtraction,
+        generateMultiplication,
+        generateDivision
+      ];
+
+      const fullPool = [
+        generateAddition,
+        generateSubtraction,
+        generateMultiplication,
+        generateDivision,
+        generateSquare,
+        generateCube,
+        generateSimpleLog
+      ];
+
+      const generator = index &lt; 8 ? choice(earlyPool) : choice(fullPool);
+      return generator();
+    }
+
+    function generateQuestionSet() {
+      const out = [];
+      for (let i = 0; i &lt; TOTAL_QUESTIONS; i++) {
+        out.push({
+          ...generateQuestion(i),
+          userAnswer: null,
+          correct: false,
+          timedOut: false
+        });
+      }
+      return out;
+    }
+
+    function setStage(stage) {
+      startStage.classList.remove("active");
+      quizStage.classList.remove("active");
+      resultsStage.classList.remove("active");
+      stage.classList.add("active");
+    }
+
+    function selectMode(mode) {
+      state.mode = mode;
+      document.querySelectorAll(".mode-option").forEach(el => {
+        el.classList.toggle("active", el.dataset.mode === mode);
+      });
+    }
+
+    document.querySelectorAll(".mode-option").forEach(option => {
+      option.addEventListener("click", () => selectMode(option.dataset.mode));
+    });
+
+    function loadVoices() {
+      if (!("speechSynthesis" in window)) {
+        voiceStatus.textContent = "Voice not supported in this browser";
+        return;
+      }
+
+      state.voices = window.speechSynthesis.getVoices();
+      const englishVoices = state.voices.filter(v => /en/i.test(v.lang));
+      state.preferredVoice = englishVoices.find(v => /google|samantha|daniel|serena|alex/i.test(v.name))
+        || englishVoices[0]
+        || state.voices[0]
+        || null;
+
+      voiceStatus.textContent = state.preferredVoice
+        ? `Voice: ${state.preferredVoice.name}`
+        : "Voice available";
+    }
+
+    loadVoices();
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    function speak(text, onEnd) {
+      if (!("speechSynthesis" in window)) {
+        if (typeof onEnd === "function") onEnd();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      if (state.preferredVoice) utterance.voice = state.preferredVoice;
+      utterance.onend = () => {
+        if (typeof onEnd === "function") onEnd();
+      };
+      utterance.onerror = () => {
+        if (typeof onEnd === "function") onEnd();
+      };
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function startGame() {
+      state.questionIndex = 0;
+      state.correct = 0;
+      state.questions = generateQuestionSet();
+      setStage(quizStage);
+      updateHeader();
+      loadQuestion();
+    }
+
+    function updateHeader() {
+      progressPill.textContent = `Question ${state.questionIndex + 1} / ${TOTAL_QUESTIONS}`;
+      scorePill.textContent = `Correct: ${state.correct}`;
+      modePill.textContent = state.mode === "voice-only" ? "Mode: Real Test" : "Mode: Practice";
+    }
+
+    function resetQuestionUI() {
+      feedback.textContent = "";
+      feedback.className = "feedback";
+      answerInput.value = "";
+      answerInput.disabled = true;
+      submitBtn.disabled = true;
+      skipBtn.disabled = true;
+      state.timeLeft = TIME_PER_QUESTION;
+      timeText.textContent = `${TIME_PER_QUESTION}s`;
+      timerBar.style.width = "100%";
+    }
+
+    function startTimer() {
+      clearInterval(state.timer);
+      state.timeLeft = TIME_PER_QUESTION;
+      timeText.textContent = `${state.timeLeft}s`;
+      timerBar.style.width = "100%";
+
+      state.timer = setInterval(() => {
+        state.timeLeft -= 1;
+        const pct = Math.max(0, (state.timeLeft / TIME_PER_QUESTION) * 100);
+        timeText.textContent = `${state.timeLeft}s`;
+        timerBar.style.width = `${pct}%`;
+
+        if (state.timeLeft &lt;= 0) {
+          clearInterval(state.timer);
+          handleTimeout();
+        }
+      }, 1000);
+    }
+
+    function enableAnswering() {
+      state.questionActive = true;
+      answerInput.disabled = false;
+      submitBtn.disabled = false;
+      skipBtn.disabled = false;
+      answerInput.focus();
+      startTimer();
+    }
+
+    function loadQuestion() {
+      updateHeader();
+      resetQuestionUI();
+
+      const q = state.questions[state.questionIndex];
+      const showText = state.mode === "voice-and-text";
+
+      questionDisplay.textContent = showText ? q.display : "…";
+      helperText.textContent = showText
+        ? "The single-operation question is shown for practice mode and also spoken once."
+        : "The single-operation question stays hidden in Real Test mode and is spoken only once.";
+
+      const spokenPrompt = q.speech;
+      speak(spokenPrompt, enableAnswering);
+    }
+
+    function sanitizeIntegerInput(value) {
+      return value.replace(/[^\d-]/g, "").replace(/(?!^)-/g, "");
+    }
+
+    answerInput.addEventListener("input", () => {
+      const cleaned = sanitizeIntegerInput(answerInput.value);
+      if (cleaned !== answerInput.value) {
+        answerInput.value = cleaned;
+      }
+    });
+
+    answerInput.addEventListener("paste", (e) => e.preventDefault());
+    answerInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submitCurrentAnswer();
+    });
+
+    function submitCurrentAnswer() {
+      if (!state.questionActive) return;
+
+      const raw = answerInput.value.trim();
+      if (!/^-?\d+$/.test(raw)) {
+        feedback.textContent = "Please enter an integer.";
+        feedback.className = "feedback wrong";
+        answerInput.focus();
+        return;
+      }
+
+      const q = state.questions[state.questionIndex];
+      const userAnswer = parseInt(raw, 10);
+      q.userAnswer = userAnswer;
+      q.correct = userAnswer === q.answer;
+
+      if (q.correct) {
+        state.correct += 1;
+        feedback.textContent = "Correct.";
+        feedback.className = "feedback correct";
+      } else {
+        feedback.textContent = `Wrong. Correct answer: ${q.answer}`;
+        feedback.className = "feedback wrong";
+      }
+
+      finalizeQuestion();
+    }
+
+    function handleTimeout() {
+      if (!state.questionActive) return;
+      const q = state.questions[state.questionIndex];
+      q.userAnswer = null;
+      q.correct = false;
+      q.timedOut = true;
+      feedback.textContent = `Time up. Correct answer: ${q.answer}`;
+      feedback.className = "feedback wrong";
+      finalizeQuestion();
+    }
+
+    function skipQuestion() {
+      if (!state.questionActive) return;
+      const q = state.questions[state.questionIndex];
+      q.userAnswer = null;
+      q.correct = false;
+      feedback.textContent = `Skipped. Correct answer: ${q.answer}`;
+      feedback.className = "feedback wrong";
+      finalizeQuestion();
+    }
+
+    function finalizeQuestion() {
+      state.questionActive = false;
+      clearInterval(state.timer);
+      answerInput.disabled = true;
+      submitBtn.disabled = true;
+      skipBtn.disabled = true;
+      updateHeader();
+
+      setTimeout(() => {
+        state.questionIndex += 1;
+        if (state.questionIndex >= TOTAL_QUESTIONS) {
+          showResults();
+        } else {
+          loadQuestion();
+        }
+      }, 1200);
+    }
+
+    function performanceLabel(percent) {
+      if (percent >= 90) return "Excellent";
+      if (percent >= 75) return "Very Good";
+      if (percent >= 60) return "Good";
+      if (percent >= 40) return "Average";
+      return "Needs Improvement";
+    }
+
+    function showResults() {
+      setStage(resultsStage);
+
+      const correct = state.correct;
+      const wrong = TOTAL_QUESTIONS - correct;
+      const percent = Math.round((correct / TOTAL_QUESTIONS) * 100);
+
+      percentBig.textContent = `${percent}%`;
+      scoreSub.textContent = "";
+      correctCount.textContent = String(correct);
+      wrongCount.textContent = String(wrong);
+      percentBox.textContent = `${percent}%`;
+      scoreRing.style.setProperty("--percent", `${percent * 3.6}deg`);
+
+      reviewList.innerHTML = state.questions.map((q, index) => {
+        const statusClass = q.correct ? "correct" : "wrong";
+        const statusText = q.correct ? "Correct" : (q.timedOut ? "Time up" : (q.userAnswer === null ? "Skipped" : "Wrong"));
+        const userText = q.userAnswer === null ? "No answer" : q.userAnswer;
+        return `
+          &lt;div class="review-item">
+            &lt;div class="review-top">
+              &lt;span>Question ${index + 1}&lt;/span>
+              &lt;span class="review-status ${statusClass}">${statusText}&lt;/span>
+            &lt;/div>
+            &lt;div class="review-meta">
+              Expression: &lt;strong>${q.display}&lt;/strong>&lt;br />
+              Your answer: &lt;strong>${userText}&lt;/strong>&lt;br />
+              Correct answer: &lt;strong>${q.answer}&lt;/strong>
+            &lt;/div>
+          &lt;/div>
+        `;
+      }).join("");
+    }
+
+    startBtn.addEventListener("click", () => {
+      if ("speechSynthesis" in window) {
+        // Some browsers need a user gesture first.
+        speechSynthesis.cancel();
+      }
+      startGame();
+    });
+
+    speakTestBtn.addEventListener("click", () => {
+      speak("Mental arithmetic voice test. If you can hear this, your browser audio is working.");
+    });
+
+    submitBtn.addEventListener("click", submitCurrentAnswer);
+    skipBtn.addEventListener("click", skipQuestion);
+    playAgainBtn.addEventListener("click", () => {
+      if ("speechSynthesis" in window) speechSynthesis.cancel();
+      setStage(startStage);
+    });
+  &lt;/script>
+&lt;/body>
+&lt;/html>
+</textarea>
+<textarea class="payload" id="payload-acoustic">&lt;!-- Study tool created for personal use. Do not resell or present as official material. -->
+&lt;!DOCTYPE html>
+&lt;html lang="en">
+&lt;head>
+&lt;meta charset="UTF-8" />
+&lt;meta name="viewport" content="width=device-width, initial-scale=1" />
+&lt;title>Acoustic Memory Test — no adjacent repeats&lt;/title>
+&lt;style>
+  :root{
+    --card:#fff; --ink:#111; --muted:#667085; --bg:#f4f7fb; --accent:#0b66ff;
+    --ok:#1a7f37; --err:#b42318; --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.08);
+    --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--sans);display:grid;place-items:center;padding:24px}
+  .app{width:min(1100px,100%);background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(18px,2.5vw,28px)}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  h1{font-size:22px;margin:0}
+  .muted{color:var(--muted)}
+  button{appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;letter-spacing:.2px}
+  button.primary{background:var(--accent);color:#fff}
+  button.secondary{background:#e7eefc;color:#0b2d66}
+  button.danger{background:#ff4c4c;color:#fff;font-size:14px;padding:8px 12px;border-radius:10px;opacity:.95}
+  .center{display:grid;place-items:center;gap:16px;text-align:center;min-height:360px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .card{border:1px solid #e9eef6;border-radius:12px;padding:14px;background:#fbfdff}
+  .hidden{display:none !important}
+  .bar{width:100%;height:14px;background:#f1f4fa;border-radius:999px;overflow:hidden;border:1px solid #e5eaf3}
+  .fill{height:100%;width:0%;background:linear-gradient(90deg,#9ec5ff,#0b66ff)}
+  .blank{background:white;color:white;border:1px solid #eee;height:360px;border-radius:12px}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th, td{padding:10px;border-bottom:1px solid #eef2f8;text-align:left}
+  tr.ok td{background:#f3fcf6}
+  tr.err td{background:#fff5f5}
+  .pill{padding:2px 8px;border-radius:999px;font-size:12px;font-weight:800}
+  .pill.ok{background:#e8f6ed;color:#145a32}
+  .pill.err{background:#fde8e7;color:#7a271a}
+  input[type="text"]{width:100%;padding:12px 14px;border:1px solid #d8e1ee;border-radius:10px;font-size:20px;letter-spacing:2px;text-align:center}
+  .helper{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:6px}
+  .digits{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
+  .good{color:#145a32;font-weight:700}
+  .bad{color:#b42318;font-weight:700}
+&lt;/style>
+&lt;/head>
+&lt;body>
+&lt;div class="app" id="app">
+  &lt;header>
+    &lt;h1>Acoustic Memory &lt;span class="muted">— no adjacent repeats&lt;/span>&lt;/h1>
+    &lt;div class="muted">Round: &lt;b id="roundNow">0&lt;/b>/&lt;b id="roundTotal">20&lt;/b>&lt;/div>
+  &lt;/header>
+
+  &lt;section id="screen-menu" class="center">
+    &lt;h2>Welcome&lt;/h2>
+    &lt;p class="muted">You will hear a sequence of digits and then type them in the same order.&lt;/p>
+    &lt;div class="row" style="margin-top:12px">
+      &lt;button id="startBtn" class="primary">Start&lt;/button>
+      &lt;button id="howBtn" class="secondary">How it works&lt;/button>
+    &lt;/div>
+    &lt;div id="how" class="card hidden" style="max-width:720px">
+      &lt;ol style="text-align:left; margin:0; padding-left:18px">
+        &lt;li>20 rounds: 10×7 digits, 5×8 digits, 5×9 digits.&lt;/li>
+        &lt;li>No adjacent repeats: two identical digits never appear next to each other (so 99 and 999 cannot occur).&lt;/li>
+        &lt;li>3.5 s ready screen, then a blank screen while digits are spoken.&lt;/li>
+        &lt;li>Score counts &lt;b>every digit in the correct place&lt;/b> across all rounds.&lt;/li>
+      &lt;/ol>
+    &lt;/div>
+  &lt;/section>
+
+  &lt;section id="screen-ready" class="center hidden">
+    &lt;h2>Be ready to hear the numbers&lt;/h2>
+    &lt;div class="bar">&lt;div id="barFill" class="fill">&lt;/div>&lt;/div>
+    &lt;div class="muted" id="readyCountdown">3.5s&lt;/div>
+  &lt;/section>
+
+  &lt;section id="screen-play" class="hidden">
+    &lt;div class="blank" aria-label="blank playback area">&lt;/div>
+  &lt;/section>
+
+  &lt;section id="screen-answer" class="center hidden" style="max-width:560px">
+    &lt;h2>Your answer&lt;/h2>
+    &lt;div class="card" style="width:100%">
+      &lt;label for="answerInput" class="muted">Enter the digits in order&lt;/label>
+      &lt;input id="answerInput" type="text" inputmode="numeric" autocomplete="off" />
+      &lt;div class="helper">
+        &lt;span id="needText">Needs 7 digits&lt;/span>
+        &lt;span id="counterText" class="digits">0/7&lt;/span>
+      &lt;/div>
+      &lt;div class="row" style="margin-top:12px; justify-content:space-between">
+        &lt;button id="quickEndBtn" class="danger">Quick End&lt;/button>
+        &lt;button id="submitAnswerBtn" class="primary">Submit&lt;/button>
+      &lt;/div>
+    &lt;/div>
+  &lt;/section>
+
+  &lt;section id="screen-results" class="hidden">
+    &lt;h2>Results&lt;/h2>
+    &lt;div class="card" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+      &lt;div>&lt;b>Accuracy:&lt;/b> &lt;span id="scorePct">0%&lt;/span>&lt;/div>
+      &lt;div class="muted">Digits correct in place: &lt;b id="posCorrect">0&lt;/b> / &lt;b id="posTotal">0&lt;/b>&lt;/div>
+      &lt;div class="muted">Perfect rounds: &lt;b id="perfectCount">0&lt;/b> / &lt;b id="roundTotal2">20&lt;/b>&lt;/div>
+    &lt;/div>
+    &lt;table id="resultsTable">
+      &lt;thead>&lt;tr>&lt;th>#&lt;/th>&lt;th>Target&lt;/th>&lt;th>Your answer&lt;/th>&lt;th>In‑place correct&lt;/th>&lt;th>Status&lt;/th>&lt;/tr>&lt;/thead>
+      &lt;tbody>&lt;/tbody>
+    &lt;/table>
+    &lt;div class="row" style="margin-top:12px; justify-content:flex-end">
+      &lt;button id="restartBtn" class="secondary">Restart&lt;/button>
+    &lt;/div>
+  &lt;/section>
+&lt;/div>
+
+&lt;script>
+(function(){
+var el = function(id){ return document.getElementById(id); };
+var screens = { menu:el("screen-menu"), ready:el("screen-ready"), play:el("screen-play"), answer:el("screen-answer"), results:el("screen-results") };
+function show(name){ for(var k in screens){ screens[k].classList.add("hidden"); } screens[name].classList.remove("hidden"); }
+function randDigit(){ return Math.floor(Math.random()*10); }
+function seqString(arr){ return arr.join(""); }
+function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+function inPlaceCorrect(targetStr, userStr){
+  var n = Math.min(targetStr.length, userStr.length), c=0;
+  for(var i=0;i&lt;n;i++){ if(userStr[i]===targetStr[i]) c++; }
+  return c;
+}
+function diffHTML(targetStr, userStr){
+  var n = Math.max(targetStr.length, userStr.length);
+  var tHTML = "", uHTML = "";
+  for(var i=0;i&lt;n;i++){
+    var t = targetStr[i] || "·";
+    var u = userStr[i] || "·";
+    var match = (t===u);
+    tHTML += "&lt;span class='"+(match?"good":"bad")+" digits'>"+t+"&lt;/span>";
+    uHTML += "&lt;span class='"+(match?"good":"bad")+" digits'>"+u+"&lt;/span>";
+  }
+  return {t:tHTML, u:uHTML};
+}
+
+// config
+var ROUNDS_TOTAL = 20;
+var GAP_BETWEEN_DIGITS = 600; // ms
+var READY_MS = 3500;
+
+// round lengths schedule
+function lengthForRound(r){
+  if(r&lt;=10) return 7;
+  if(r&lt;=15) return 8;
+  return 9;
+}
+
+// generate sequence with no adjacent equal digits
+function genSequenceNoAdjacent(len){
+  var arr = [];
+  for(var i=0;i&lt;len;i++){
+    var d = randDigit();
+    if(i>0){
+      // ensure d != previous
+      if(d === arr[i-1]){
+        // pick alternative uniformly from the other 9 digits
+        var alt = Math.floor(Math.random()*9);
+        if(alt >= d) alt += 1; // shift to skip current d
+        d = alt;
+      }
+    }
+    arr.push(d);
+  }
+  return arr;
+}
+
+// state
+var state = { round:0, results:[], current:{ target:[], user:"", need:7 } };
+function resetGame(){ state.round=0; state.results=[]; updateUI(); }
+function updateUI(){ el("roundNow").textContent = state.round; }
+el("roundTotal").textContent = ROUNDS_TOTAL;
+el("roundTotal2").textContent = ROUNDS_TOTAL;
+
+// TTS
+function preloadTTS(timeoutMs){
+  if(timeoutMs===undefined) timeoutMs=1500;
+  return new Promise(function(resolve){
+    if(!('speechSynthesis' in window)) return resolve(false);
+    var voices = speechSynthesis.getVoices();
+    if(voices &amp;&amp; voices.length) return resolve(true);
+    speechSynthesis.onvoiceschanged = function(){ speechSynthesis.onvoiceschanged = null; resolve(true); };
+    setTimeout(function(){ resolve((speechSynthesis.getVoices()||[]).length>0); }, timeoutMs);
+  });
+}
+function speakDigit(d){
+  return new Promise(function(resolve){
+    try{
+      if(!('speechSynthesis' in window)) return resolve();
+      var u = new SpeechSynthesisUtterance(String(d));
+      u.rate = 0.95; u.pitch = 1.0; u.volume = 1.0; u.lang = 'en-US';
+      u.onend = function(){ resolve(); };
+      u.onerror = function(){ resolve(); };
+      window.speechSynthesis.speak(u);
+      setTimeout(resolve, 1600);
+    }catch(e){ resolve(); }
+  });
+}
+
+// flow
+async function runReady(){
+  show("ready");
+  var bar = el("barFill"), out = el("readyCountdown");
+  if(bar) bar.style.width="0%";
+  var start = performance.now();
+  return new Promise(function(resolve){
+    function tick(now){
+      var t = Math.min(1, (now-start)/READY_MS);
+      if(bar) bar.style.width = (t*100).toFixed(1)+"%";
+      if(out) out.textContent = ((READY_MS-(now-start))/1000).toFixed(1)+"s";
+      if(t&lt;1) requestAnimationFrame(tick); else resolve();
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+async function runPlayback(){
+  show("play");
+  var L = lengthForRound(state.round);
+  state.current.need = L;
+  var target = genSequenceNoAdjacent(L);
+  state.current.target = target;
+  await preloadTTS();
+  for(var i=0;i&lt;target.length;i++){
+    await speakDigit(target[i]);
+    if(i&lt;target.length-1) await sleep(GAP_BETWEEN_DIGITS);
+  }
+}
+
+function goAnswer(){
+  show("answer");
+  var L = state.current.need;
+  var inp = el("answerInput");
+  var needText = el("needText");
+  var counter = el("counterText");
+  inp.value = "";
+  inp.maxLength = L; // hard cap
+  needText.textContent = "Needs " + L + " digits";
+  counter.textContent = "0/" + L;
+  inp.oninput = function(){
+    var v = (inp.value||"").replace(/\D+/g,"").slice(0,L);
+    if(v !== inp.value) inp.value = v;
+    counter.textContent = v.length + "/" + L;
+  };
+  setTimeout(function(){ inp.focus({preventScroll:true}); }, 10);
+}
+
+function endRound(){
+  var user = (el("answerInput").value || "").replace(/\s+/g,"");
+  var target = seqString(state.current.target);
+  var inPlace = inPlaceCorrect(target, user);
+  var totalHere = target.length;
+  var perfect = (user === target);
+  state.results.push({ round: state.round, user: user, target: target, inPlace: inPlace, total: totalHere, perfect: perfect });
+  if(state.round>=ROUNDS_TOTAL) showResults();
+  else nextRound();
+}
+
+function showResults(){
+  show("results");
+  var tbody = document.querySelector("#resultsTable tbody"); 
+  tbody.innerHTML = "";
+  var posCorrect = 0, posTotal = 0, perfectCount = 0;
+  state.results.forEach(function(r){
+    posCorrect += r.inPlace; posTotal += r.total; if(r.perfect) perfectCount++;
+    var d = diffHTML(r.target, r.user);
+    var tr = document.createElement("tr");
+    tr.className = r.perfect ? "ok" : "err";
+    tr.innerHTML = "&lt;td>"+r.round+"&lt;/td>&lt;td class='digits'>"+d.t+"&lt;/td>&lt;td class='digits'>"+d.u+"&lt;/td>&lt;td>"+r.inPlace+" / "+r.total+"&lt;/td>&lt;td>"+(r.perfect?'&lt;span class=\"pill ok\">Perfect&lt;/span>':'&lt;span class=\"pill err\">Partial&lt;/span>')+"&lt;/td>";
+    tbody.appendChild(tr);
+  });
+  var pct = Math.round((posCorrect/Math.max(1,posTotal))*100);
+  el("posCorrect").textContent = posCorrect;
+  el("posTotal").textContent = posTotal;
+  el("perfectCount").textContent = perfectCount;
+  el("scorePct").textContent = pct + "%";
+}
+
+async function nextRound(){
+  state.round++;
+  updateUI();
+  await runReady();
+  await runPlayback();
+  goAnswer();
+}
+
+el("startBtn").addEventListener("click", function(){
+  try{
+    resetGame();
+    if('speechSynthesis' in window){
+      try{ window.speechSynthesis.cancel(); }catch(e){}
+    }
+    nextRound();
+  }catch(e){
+    console.error(e);
+    alert("Unexpected error starting the game.");
+  }
+});
+
+el("howBtn").addEventListener("click", function(){
+  var c = el("how"); c.classList.toggle("hidden");
+});
+
+el("submitAnswerBtn").addEventListener("click", function(){
+  endRound();
+});
+
+el("answerInput").addEventListener("keydown", function(ev){
+  if(ev.key === "Enter"){ endRound(); }
+});
+
+el("quickEndBtn").addEventListener("click", function(){
+  showResults();
+});
+
+el("restartBtn").addEventListener("click", function(){
+  resetGame(); show("menu");
+});
+
+show("menu");
+updateUI();
+})();
+&lt;/script>
+
+&lt;footer style="margin-top:24px;padding-top:12px;border-top:1px solid #e3e7f0;font-size:12px;color:#667085;text-align:center;">
+  Created for personal study use by the applicant community. Not official. Not for sale. Not affiliated with Wizz Air.
+&lt;/footer>
+&lt;/body>
+&lt;/html>
+</textarea>
+<textarea class="payload" id="payload-concentration">&lt;!-- Study tool created for personal use. Do not resell or present as official material. -->
+&lt;!DOCTYPE html>
+&lt;html lang="en">
+&lt;head>
+&lt;meta charset="utf-8">
+&lt;meta name="viewport" content="width=device-width, initial-scale=1" />
+&lt;title>Concentration — 150 Tasks in 9 Minutes&lt;/title>
+&lt;style>
+  :root{
+    --bg:#f7f8fb; --card:#ffffff; --ink:#0f172a; --muted:#64748b;
+    --accent:#3b82f6; --accent-ink:#1d4ed8; --good:#16a34a; --bad:#ef4444;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.08);
+    --radius: 16px;
+  }
+  *{box-sizing:border-box}
+  html, body{height:100%; margin:0}
+  body{font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--ink)}
+  .wrap{max-width: 900px; margin: 0 auto; padding: 20px}
+  .card{background:var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px}
+  h1{margin:0 0 8px; font-size: 34px; letter-spacing:.3px}
+  h2{margin:8px 0 12px; font-size: 22px}
+  p{margin:8px 0; color: var(--muted)}
+  .center{display:flex; justify-content:center; align-items:center}
+  .btn{border:0; background: var(--accent); color:#fff; font-weight:800; padding: 10px 14px; border-radius: 12px; cursor:pointer; font-size:15px}
+  .btn.sec{background:#e2e8f0; color:#0f172a}
+  .btn.danger{background:#ef4444}
+  .btn[disabled]{opacity:.6; cursor:not-allowed}
+  .menu{display:grid; gap:14px; justify-items:center}
+  .screen{display:none}
+  .screen.active{display:block}
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom: 12px}
+  .right{display:flex; gap:8px; align-items:center}
+  .pill{background:#eef2ff; color:#1d4ed8; font-weight:900; border-radius:999px; padding:6px 12px; letter-spacing:.5px}
+  .ruleTitle{font-weight:900; font-size:18px; margin-bottom:6px}
+  .ruleDesc{margin:0 0 14px; color:#0f172a; font-weight:600}
+  .digits{font-size:64px; font-weight:900; letter-spacing: 10px; text-align:center; margin: 22px 0}
+  .inputArea{margin-top: 8px}
+  .label{font-weight:800; margin-bottom:6px}
+  .input{width: 100%; padding: 12px 14px; font-size: 22px; border: 2px solid #0f172a; border-radius: 12px}
+  .meta{display:flex; gap:12px; align-items:center; color:var(--muted); font-weight:700}
+  .timer{font-weight:900; font-size:18px}
+  .counter{font-weight:900; font-size:18px}
+  .result{margin-top:10px; font-weight:800}
+  .good{color:var(--good)} .bad{color:var(--bad)}
+  table{width:100%; border-collapse: collapse; margin-top: 12px}
+  th, td{border-bottom:1px solid #e5e7eb; padding:8px 6px; text-align:center}
+  th{text-align:center; color:#0f172a}
+  .ok{color:var(--good); font-weight:900}
+  .no{color:var(--bad); font-weight:900}
+  .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#e2e8f0; padding:2px 6px; border-radius:6px;}
+  .footerHint{margin-top:10px; color:var(--muted); font-size:14px}
+&lt;/style>
+&lt;/head>
+&lt;body>
+&lt;div class="wrap">
+
+  &lt;!-- MENU -->
+  &lt;div id="menu" class="screen active">
+    &lt;div class="card menu">
+      &lt;h1>Concentration&lt;/h1>
+      &lt;p>Speed &amp;amp; accuracy: solve as many micro-tasks as you can in &lt;b>9 minutes&lt;/b>. Each task shows two digits (1–9) and a rule.&lt;/p>
+      &lt;div class="card" style="width:100%; max-width:640px">
+        &lt;div class="ruleTitle">Rules used (picked randomly each task)&lt;/div>
+        &lt;ol>
+          &lt;li>&lt;b>Rule 1:&lt;/b> Digit1 = &lt;i>sum&lt;/i> (last digit). Digit2 = &lt;i>absolute difference&lt;/i>.&lt;/li>
+          &lt;li>&lt;b>Rule 2:&lt;/b> Digit1 = &lt;i>absolute difference&lt;/i>. Digit2 = &lt;i>sum&lt;/i> (last digit).&lt;/li>
+          &lt;li>&lt;b>Rule 3:&lt;/b> Digit1 = &lt;i>num1 − num2&lt;/i> (can be negative). Digit2 = &lt;i>sum&lt;/i> (last digit).&lt;/li>
+          &lt;li>&lt;b>Rule 4:&lt;/b> Digit1 = &lt;i>num2 − num1&lt;/i> (can be negative). Digit2 = &lt;i>sum&lt;/i> (last digit).&lt;/li>
+        &lt;/ol>
+        &lt;p class="footerHint">Tip: press &lt;span class="kbd">Enter&lt;/span> to submit fast. Answers are 2 digits, or 3 chars when a leading minus is required.&lt;/p>
+      &lt;/div>
+      &lt;div class="center" style="gap:10px">
+        &lt;button id="btnStart" class="btn">Start&lt;/button>
+        &lt;button id="btnHow" class="btn sec">How it works&lt;/button>
+      &lt;/div>
+    &lt;/div>
+  &lt;/div>
+
+  &lt;!-- HOW -->
+  &lt;div id="how" class="screen">
+    &lt;div class="card">
+      &lt;h2>How it works&lt;/h2>
+      &lt;p>You will see two digits like &lt;b>2 4&lt;/b> and a highlighted rule (e.g., &lt;b>Rule 3&lt;/b>). Compute the answer:&lt;/p>
+      &lt;ul>
+        &lt;li>Rules 1–2: Answer has &lt;b>2 digits&lt;/b>.&lt;/li>
+        &lt;li>Rules 3–4: If the first part is negative, type a leading &lt;b>minus&lt;/b>, e.g., &lt;code>-46&lt;/code>.&lt;/li>
+      &lt;/ul>
+      &lt;p>Timer starts when you press &lt;b>Start&lt;/b>. You can attempt up to 150 tasks.&lt;/p>
+      &lt;div class="center" style="margin-top:10px">&lt;button class="btn sec" id="btnBackMenu">Back&lt;/button>&lt;/div>
+    &lt;/div>
+  &lt;/div>
+
+  &lt;!-- GAME -->
+  &lt;div id="game" class="screen">
+    &lt;div class="card">
+      &lt;div class="topbar">
+        &lt;div class="meta">&lt;span class="counter" id="counter">Task 1 / 150&lt;/span>&lt;/div>
+        &lt;div class="right">
+          &lt;div class="pill timer" id="timer">09:00&lt;/div>
+          &lt;button class="btn danger" id="btnStop" title="Stop now and see results">Stop&lt;/button>
+        &lt;/div>
+      &lt;/div>
+      &lt;div id="ruleHeader">
+        &lt;div class="ruleTitle" id="ruleTitle">Rule 1&lt;/div>
+        &lt;div class="ruleDesc" id="ruleDesc">Digit1 = sum (last digit). Digit2 = absolute difference.&lt;/div>
+      &lt;/div>
+      &lt;div class="digits" id="digits">2&amp;nbsp;&amp;nbsp;&amp;nbsp;4&lt;/div>
+      &lt;div class="inputArea">
+        &lt;div class="label" id="ansLabel">My answer:&lt;/div>
+        &lt;input id="answer" class="input" placeholder="Enter two digits" maxlength="2" inputmode="text" />
+      &lt;/div>
+      &lt;div id="feedback" class="result">&lt;/div>
+    &lt;/div>
+  &lt;/div>
+
+  &lt;!-- END -->
+  &lt;div id="end" class="screen">
+    &lt;div class="card">
+      &lt;h2>Time!&lt;/h2>
+      &lt;p id="endSummary">&lt;/p>
+      &lt;table id="endTable">
+        &lt;thead>&lt;tr>&lt;th>#&lt;/th>&lt;th>Digits&lt;/th>&lt;th>Rule&lt;/th>&lt;th>Your&lt;/th>&lt;th>Correct&lt;/th>&lt;th>✓/✗&lt;/th>&lt;/tr>&lt;/thead>
+        &lt;tbody>&lt;/tbody>
+      &lt;/table>
+      &lt;div class="center" style="margin-top:12px; gap:8px">
+        &lt;button class="btn" id="btnRestart">Play again&lt;/button>
+        &lt;button class="btn sec" id="btnHome">Home&lt;/button>
+      &lt;/div>
+    &lt;/div>
+  &lt;/div>
+
+&lt;/div>
+
+&lt;script>
+const TOTAL_TASKS = 150;
+const TOTAL_TIME = 9 * 60;
+
+// Rule evaluators now return {answerStr, needsMinus}
+// - needsMinus tells UI to allow '-' and set maxlength to 3 only when required.
+const RULES = [
+  {id:1,title:"Rule 1",desc:"Digit1 = sum (last digit). Digit2 = absolute difference.",
+    eval:(a,b)=>({answerStr: String(((a+b)%10)) + String(Math.abs(a-b)), needsMinus:false})},
+  {id:2,title:"Rule 2",desc:"Digit1 = absolute difference. Digit2 = sum (last digit).",
+    eval:(a,b)=>({answerStr: String(Math.abs(a-b)) + String((a+b)%10), needsMinus:false})},
+  {id:3,title:"Rule 3",desc:"Digit1 = (num1 − num2) (can be negative). Digit2 = sum (last digit).",
+    eval:(a,b)=>{ const d=a-b; const s=(a+b)%10; return {answerStr: (d&lt;0?'-':'') + String(Math.abs(d)) + String(s), needsMinus:(d&lt;0)}; }},
+  {id:4,title:"Rule 4",desc:"Digit1 = (num2 − num1) (can be negative). Digit2 = sum (last digit).",
+    eval:(a,b)=>{ const d=b-a; const s=(a+b)%10; return {answerStr: (d&lt;0?'-':'') + String(Math.abs(d)) + String(s), needsMinus:(d&lt;0)}; }},
+];
+
+let tLeft=TOTAL_TIME,timerId=null,taskIdx=0,curA=0,curB=0,curRule=RULES[0],curCorrectStr="00",allowMinus=false,attempts=[],finished=false;
+
+const $=sel=>document.querySelector(sel);
+const screens={menu:$("#menu"),how:$("#how"),game:$("#game"),end:$("#end")};
+const counterEl=$("#counter"),timerEl=$("#timer"),digitsEl=$("#digits");
+const ruleTitleEl=$("#ruleTitle"),ruleDescEl=$("#ruleDesc");
+const answerEl=$("#answer"),feedbackEl=$("#feedback"), ansLabel=$("#ansLabel");
+
+function show(id){Object.values(screens).forEach(s=>s.classList.remove("active"));screens[id].classList.add("active");}
+$("#btnStart").addEventListener("click",start);$("#btnHow").addEventListener("click",()=>show("how"));
+$("#btnBackMenu").addEventListener("click",()=>show("menu"));$("#btnRestart").addEventListener("click",()=>{show("menu");});
+$("#btnHome").addEventListener("click",()=>show("menu"));
+$("#btnStop").addEventListener("click",finishNow);
+
+function fmt(t){const m=Math.floor(t/60),s=t%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function tick(){tLeft--;if(tLeft&lt;0){finish();return;}timerEl.textContent=fmt(tLeft);}
+
+function start(){tLeft=TOTAL_TIME;timerEl.textContent=fmt(tLeft);taskIdx=0;attempts=[];finished=false;clearInterval(timerId);timerId=setInterval(tick,1000);show("game");nextTask();}
+
+function nextTask(){
+  if(finished) return;
+  taskIdx++; if(taskIdx>TOTAL_TASKS){ finish(); return; }
+  curA=1+Math.floor(Math.random()*9); curB=1+Math.floor(Math.random()*9);
+  curRule=RULES[Math.floor(Math.random()*RULES.length)];
+  const r = curRule.eval(curA,curB);
+  curCorrectStr = r.answerStr;
+  allowMinus = r.needsMinus;
+
+  // UI
+  counterEl.textContent=`Task ${taskIdx} / ${TOTAL_TASKS}`;
+  digitsEl.innerHTML=`${curA}&amp;nbsp;&amp;nbsp;&amp;nbsp;${curB}`;
+  ruleTitleEl.textContent=curRule.title; ruleDescEl.textContent=curRule.desc;
+  feedbackEl.textContent="";
+  answerEl.value="";
+  if(allowMinus){
+    answerEl.maxLength = 3;
+    answerEl.placeholder = "Enter like -46";
+    ansLabel.textContent = "My answer (minus allowed):";
+  }else{
+    answerEl.maxLength = 2;
+    answerEl.placeholder = "Enter two digits";
+    ansLabel.textContent = "My answer:";
+  }
+  answerEl.focus();
+}
+
+answerEl.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ submit(); }});
+
+function submit(){
+  if(finished) return;
+  const val=answerEl.value.trim();
+  if(allowMinus){
+    if(!/^-?\d{2}$/.test(val) || !val.startsWith('-')){
+      // must include '-' for these cases
+      feedbackEl.innerHTML=`&lt;span class="bad">Include a leading minus (e.g., -46).&lt;/span>`; return;
+    }
+  }else{
+    if(!/^\d{2}$/.test(val)){
+      feedbackEl.innerHTML=`&lt;span class="bad">Enter exactly two digits.&lt;/span>`; return;
+    }
+  }
+  const ok = (val === curCorrectStr);
+  feedbackEl.innerHTML = ok ? `&lt;span class="good">Correct!&lt;/span>`
+                            : `&lt;span class="bad">Wrong.&lt;/span> Correct: &lt;b>${curCorrectStr}&lt;/b>`;
+
+  attempts.push({a:curA,b:curB,ruleId:curRule.id,your:val,correct:curCorrectStr,ok});
+  nextTask();
+}
+
+function finishNow(){ finish(true); }
+
+function finish(manual=false){
+  if(finished) return;
+  finished = true;
+  clearInterval(timerId);
+  const attempted=attempts.length;
+  const correct=attempts.filter(x=>x.ok).length;
+  const acc=attempted?Math.round(100*correct/attempted):0;
+  const head = manual ? "Stopped!" : "Time!";
+  document.querySelector("#end h2").textContent = head;
+  $("#endSummary").innerHTML=`You solved &lt;b>${attempted}&lt;/b> tasks, with &lt;b>${correct}&lt;/b> correct (${acc}%).`;
+
+  const tbody=$("#endTable tbody"); tbody.innerHTML="";
+  attempts.forEach((t,i)=>{
+    const tr=document.createElement("tr");
+    const rname="Rule "+t.ruleId;
+    tr.innerHTML=`&lt;td>${i+1}&lt;/td>&lt;td>${t.a} &amp;nbsp; ${t.b}&lt;/td>&lt;td>${rname}&lt;/td>
+                  &lt;td>${t.your}&lt;/td>&lt;td>${t.correct}&lt;/td>
+                  &lt;td>${t.ok?'&lt;span class="ok">✓&lt;/span>':'&lt;span class="no">✗&lt;/span>'}&lt;/td>`;
+    tbody.appendChild(tr);
+  });
+  show("end");
+}
+&lt;/script>
+
+&lt;footer style="margin-top:24px;padding-top:12px;border-top:1px solid #e3e7f0;font-size:12px;color:#667085;text-align:center;">
+  Created for personal study use by the applicant community. Not official. Not for sale. Not affiliated with Wizz Air.
+&lt;/footer>
+&lt;/body>
+&lt;/html>
+</textarea>
+<textarea class="payload" id="payload-passcodes">&lt;!-- Study tool created for personal use. Do not resell or present as official material. -->
+&lt;!DOCTYPE html>
+&lt;html lang="en">
+&lt;head>
+&lt;meta charset="UTF-8" />
+&lt;meta name="viewport" content="width=device-width, initial-scale=1" />
+&lt;title>Analytical Thinking — Passcode Patterns (v3)&lt;/title>
+&lt;style>
+  :root{
+    --card:#fff; --ink:#111; --muted:#667085; --bg:#f4f7fb; --accent:#0b66ff;
+    --ok:#1a7f37; --err:#b42318; --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.08);
+    --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--sans);display:grid;place-items:center;padding:24px}
+  .app{width:min(1100px,100%);background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:clamp(18px,2.5vw,28px)}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  h1{font-size:22px;margin:0}
+  .muted{color:var(--muted)}
+  button{appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;letter-spacing:.2px}
+  button.primary{background:var(--accent);color:#fff}
+  button.secondary{background:#e7eefc;color:#0b2d66}
+  button.danger{background:#ff4c4c;color:#fff}
+  button:disabled{opacity:.5; cursor:not-allowed}
+  .center{display:grid;place-items:center;gap:16px;text-align:center;min-height:360px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .card{border:1px solid #e9eef6;border-radius:12px;padding:14px;background:#fbfdff}
+  .hidden{display:none !important}
+  .pill{padding:2px 8px;border-radius:999px;font-size:12px;font-weight:800}
+  .pill.ok{background:#e8f6ed;color:#145a32}
+  .pill.err{background:#fde8e7;color:#7a271a}
+  .passcode{font-size:28px; letter-spacing:6px; padding:8px 12px; border:1px dashed #d7def0; border-radius:10px; background:#fcfdff}
+  .qbox{display:flex; flex-direction:column; gap:14px}
+  .opt{display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid #e7ecf6; border-radius:12px; background:#fff}
+  .opt input[type="radio"]{appearance:none; width:20px; height:20px; border:2px solid #7e8cd6; border-radius:50%; display:grid; place-items:center}
+  .opt input[type="radio"]:checked{background:#0b66ff; box-shadow:inset 0 0 0 4px #fff}
+  .opt input[type="checkbox"]{appearance:none; width:20px; height:20px; border:2px solid #7e8cd6; border-radius:4px; display:grid; place-items:center}
+  .opt input[type="checkbox"]:checked{background:#0b66ff; box-shadow:inset 0 0 0 4px #fff}
+  .timer{font-weight:800; color:#0b2d66; background:#e7eefc; padding:6px 10px; border-radius:10px}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th, td{padding:10px;border-bottom:1px solid #eef2f8;text-align:left}
+  tr.ok td{background:#f3fcf6}
+  tr.err td{background:#fff5f5}
+  .digits{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
+&lt;/style>
+&lt;/head>
+&lt;body>
+&lt;div class="app" id="app">
+  &lt;header>
+    &lt;h1>Analytical Thinking &lt;span class="muted">— passcode patterns&lt;/span>&lt;/h1>
+    &lt;div class="muted">Q: &lt;b id="qNow">0&lt;/b>/&lt;b id="qTotal">25&lt;/b>&lt;/div>
+    &lt;div class="timer" id="timer">08:00&lt;/div>
+  &lt;/header>
+
+  &lt;!-- MENU -->
+  &lt;section id="screen-menu" class="center">
+    &lt;h2>Welcome&lt;/h2>
+    &lt;p class="muted">Decode the passcode and choose the word(s) that match the same letter pattern.&lt;/p>
+    &lt;ul class="muted" style="text-align:left; max-width:720px">
+      &lt;li>25 questions in &lt;b>8 minutes&lt;/b>.&lt;/li>
+      &lt;li>Rounds 1–15: single answer (circles). Rounds 16–25: 2–3 answers (squares).&lt;/li>
+      &lt;li>All options per question have the &lt;b>same length&lt;/b> as the passcode.&lt;/li>
+      &lt;li>&lt;b>Scoring:&lt;/b> Single = 1 point if correct. Multi = +1 per correct selection, −1 per incorrect (min 0). Max points per round = number of correct options.&lt;/li>
+    &lt;/ul>
+    &lt;div class="row">
+      &lt;button id="startBtn" class="primary">Start&lt;/button>
+      &lt;button id="howBtn" class="secondary">How it works&lt;/button>
+    &lt;/div>
+    &lt;div id="how" class="card hidden" style="max-width:720px">
+      &lt;p>Each new letter in the hidden word becomes a new symbol; repeated letters reuse the same symbol. Pick the options whose letter structure matches the passcode.&lt;/p>
+    &lt;/div>
+  &lt;/section>
+
+  &lt;!-- QUESTION -->
+  &lt;section id="screen-question" class="hidden">
+    &lt;div class="card qbox">
+      &lt;div class="muted">Which word(s) does the following passcode stand for?&lt;/div>
+      &lt;div id="passcode" class="passcode">◯ + § § ✕&lt;/div>
+      &lt;div id="opts">&lt;/div>
+      &lt;div class="row" style="justify-content:space-between">
+        &lt;button id="quickEndBtn" class="danger">Quick End&lt;/button>
+        &lt;button id="submitBtn" class="primary" disabled>Submit&lt;/button>
+      &lt;/div>
+    &lt;/div>
+  &lt;/section>
+
+  &lt;!-- RESULTS -->
+  &lt;section id="screen-results" class="hidden">
+    &lt;h2>Results&lt;/h2>
+    &lt;div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      &lt;div>&lt;b>Points:&lt;/b> &lt;span id="pointsTotal">0&lt;/span> / &lt;span id="pointsPossible">0&lt;/span>&lt;/div>
+      &lt;div>&lt;b>Accuracy:&lt;/b> &lt;span id="scorePct">0%&lt;/span>&lt;/div>
+      &lt;div class="muted">Exact rounds correct: &lt;b id="roundCorrect">0&lt;/b> / &lt;b id="qTotal2">25&lt;/b>&lt;/div>
+      &lt;div class="muted">Time used: &lt;b id="timeUsed">—&lt;/b>&lt;/div>
+    &lt;/div>
+    &lt;table id="resultsTable">
+      &lt;thead>&lt;tr>&lt;th>#&lt;/th>&lt;th>Passcode&lt;/th>&lt;th>Your choice(s)&lt;/th>&lt;th>Correct&lt;/th>&lt;th>Points&lt;/th>&lt;th>Status&lt;/th>&lt;/tr>&lt;/thead>
+      &lt;tbody>&lt;/tbody>
+    &lt;/table>
+    &lt;div class="row" style="margin-top:12px; justify-content:flex-end">
+      &lt;button id="restartBtn" class="secondary">Restart&lt;/button>
+    &lt;/div>
+  &lt;/section>
+&lt;/div>
+
+&lt;script>
+(function(){
+// dictionary (same as v2, trimmed to 4–9 length)
+var WORDS = [
+"array","apply","sleep","blood","smile","train","stone","crown","press","glass","grass","proud","flute","piano","gamer","sugar",
+"queen","zebra","tiger","eagle","mouse","horse","camel","otter","whale","shark","cobra",
+"river","ocean","earth","metal","solid","liquid","plasm","storm","thunder","cloud","breeze","frost","blaze",
+"alpha","gamma","delta","theta","omega","kappa","sigma","logic","ratio","proof","model","theory","axiom",
+"circle","square","triangle","rhythm","stream","branch","median","number","vector","matrix",
+"planet","saturn","jupiter","mercury","neptune","uranus","meteor","comet","galaxy","cosmos",
+"winter","summer","spring","autumn","yellow","violet","orange","purple","silver","golden",
+"doctor","nurse","father","mother","sister","brother","friend","teacher","pupil","student",
+"rocket","engine","thrust","fusion","plasma","charge","field","current","voltage","resist",
+"random","symbol","cipher","letter","encode","decode","puzzle","riddle","token","secret",
+"animal","forest","jungle","island","desert","valley","canyon","tundra","steppe","savann",
+"garden","flower","thorns","branch","bamboo","orchid","potato","tomato","pepper","onions",
+"shadow","bright","gentle","silent","smooth","bitter","sweet","noodle","puzzle","little",
+"castle","bridge","tower","palace","cottage","village","harbor","anchor","sailor","pirate",
+"linear","affine","parity","vector","scalar","tensor","invert","domain","kernel","lambda",
+"motion","energy","moment","impulse","normal","tangent","radius","sector",
+"phoenix","griffin","dragon","pegasus","cipher","quantum","nebula","aurora","lithium","boron"
+];
+
+// utils
+function el(id){ return document.getElementById(id); }
+function show(name){ ["screen-menu","screen-question","screen-results"].forEach(i=>el(i).classList.add("hidden")); el(name).classList.remove("hidden"); }
+function randChoice(a){ return a[Math.floor(Math.random()*a.length)]; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function patternOf(word){
+  word = word.toLowerCase();
+  var map={}, next=0, pat=[];
+  for(var i=0;i&lt;word.length;i++){ var ch=word[i]; if(!(ch in map)) map[ch]=next++; pat.push(map[ch]); }
+  return pat.join(".");
+}
+function makePasscodeFromPattern(pat){
+  var symbols = ["◯","●","◎","○","⊙","◇","◆","□","■","▢","△","▲","▽","▼","☆","★","✦","✧","✪","✫","✬","✭",
+                 "♣","♠","♥","♦","♢","♤","♧","♩","♪","♫","♬","♮",
+                 "⊕","⊗","⊞","⊠","⊡","⊚","⊛","⊜","⊝","⊟",
+                 "☼","☀","☾","☽","☁","☂","☃","☄","☉","☊","☋","☌","☍",
+                 "⚑","⚐","⚙","⚛","⚗","⚓","⚔","⚖","⚘",
+                 "∞","∑","∏","∆","∇","√","∴","∵","≈","≠","≤","≥","≡","⊂","⊃","∈","∉","∅",
+                 "+","×","÷","±","§","¶","†","‡","•","※","¤"];
+  var uniq = Array.from(new Set(pat.split(".").map(Number)));
+  var pool = shuffle(symbols.slice());
+  var map={}, seq=[];
+  uniq.forEach(function(k){ map[k]=pool.pop(); });
+  pat.split(".").forEach(function(k){ seq.push(map[Number(k)]); });
+  return seq.join(" ");
+}
+
+// index
+var WORDS_BY_PATTERN = {}, WORDS_BY_LENGTH = {};
+WORDS.forEach(function(w){
+  if(w.length&lt;4 || w.length>9) return;
+  var p = patternOf(w);
+  (WORDS_BY_PATTERN[p] = WORDS_BY_PATTERN[p] || []).push(w);
+  (WORDS_BY_LENGTH[w.length] = WORDS_BY_LENGTH[w.length] || []).push(w);
+});
+
+// state
+var TOTAL = 25, SINGLE_COUNT = 15;
+var qNow = 0, results = [], round = null;
+var timerId = null, timeLeft = 8*60;
+
+function formatTime(s){ var m=Math.floor(s/60), ss=s%60; return (m&lt;10?"0":"")+m+":"+(ss&lt;10?"0":"")+ss; }
+function startTimer(){
+  el("timer").textContent = formatTime(timeLeft);
+  timerId = setInterval(function(){
+    timeLeft--;
+    if(timeLeft &lt; 0){ clearInterval(timerId); finish(); return; }
+    el("timer").textContent = formatTime(timeLeft);
+  }, 1000);
+}
+
+function newRound(){
+  qNow++; el("qNow").textContent = qNow;
+  var keys = Object.keys(WORDS_BY_PATTERN).filter(function(k){
+    var len = k.split(".").length;
+    return len>=4 &amp;&amp; len&lt;=9 &amp;&amp; WORDS_BY_PATTERN[k].length >= 3;
+  });
+  var pat = randChoice(keys);
+  var candidates = shuffle(WORDS_BY_PATTERN[pat].slice());
+  var wordLen = pat.split(".").length;
+  var multi = (qNow > SINGLE_COUNT);
+  var correctN = multi ? (Math.random()&lt;0.5?2:3) : 1;
+  var correct = candidates.slice(0, correctN);
+  var passcode = makePasscodeFromPattern(pat);
+
+  var decoyPool = (WORDS_BY_LENGTH[wordLen] || []).filter(function(w){ return patternOf(w) !== pat; });
+  var options = shuffle(correct.concat(shuffle(decoyPool).slice(0, 5 - correctN)));
+
+  round = { passcode: passcode, pattern: pat, options: options, correct: correct, multi: multi, len: wordLen };
+  renderQuestion();
+}
+
+function renderQuestion(){
+  show("screen-question");
+  el("passcode").textContent = round.passcode;
+  var holder = el("opts");
+  holder.innerHTML = "";
+  var name = "qsel";
+  round.options.forEach(function(opt,i){
+    var id = "opt_"+i;
+    var wrap = document.createElement("label");
+    wrap.className = "opt";
+    var input = document.createElement("input");
+    input.type = round.multi ? "checkbox" : "radio";
+    input.name = name; input.id = id; input.value = opt;
+    var text = document.createElement("span");
+    text.textContent = opt.toUpperCase();
+    wrap.appendChild(input); wrap.appendChild(text); holder.appendChild(wrap);
+  });
+  var submitBtn = el("submitBtn"); submitBtn.disabled = true;
+  holder.addEventListener("change", function(){ submitBtn.disabled = !holder.querySelector("input:checked"); });
+}
+
+function gatherChosen(){
+  var chosen = []; el("opts").querySelectorAll("input").forEach(inp => { if(inp.checked) chosen.push(inp.value); });
+  return chosen;
+}
+
+function submitRound(){
+  var chosen = gatherChosen(); if(!chosen.length) return;
+  results.push({ idx:qNow, passcode: round.passcode, correct: round.correct.slice(), chosen: chosen.slice(), multi: round.multi });
+  if(qNow>=TOTAL){ finish(); } else { newRound(); }
+}
+
+function finish(){
+  clearInterval(timerId);
+  show("screen-results");
+  var exact = 0, totalPoints = 0, totalPossible = 0;
+  var tbody = el("resultsTable").querySelector("tbody"); tbody.innerHTML = "";
+  results.forEach(function(r){
+    var setC = new Set(r.correct), setU = new Set(r.chosen);
+    var correctCount = setC.size;
+    var exactOk = (correctCount===setU.size) &amp;&amp; Array.from(setC).every(x => setU.has(x));
+    if(exactOk) exact++;
+    var points=0, possible = r.multi ? correctCount : 1;
+    if(r.multi){
+      var pos=0, neg=0;
+      setU.forEach(function(x){ if(setC.has(x)) pos++; else neg++; });
+      points = Math.max(0, pos - neg);
+    }else{
+      points = (setU.size===1 &amp;&amp; setC.has(Array.from(setU)[0])) ? 1 : 0;
+    }
+    totalPoints += points; totalPossible += possible;
+
+    var your = r.chosen.length ? r.chosen.map(s=>s.toUpperCase()).join(", ") : "—";
+    var corr = r.correct.map(s=>s.toUpperCase()).join(", ");
+    var tr = document.createElement("tr");
+    tr.className = exactOk ? "ok" : "err";
+    tr.innerHTML = "&lt;td>"+r.idx+"&lt;/td>&lt;td class='digits'>"+r.passcode+"&lt;/td>&lt;td>"+your+"&lt;/td>&lt;td>"+corr+"&lt;/td>&lt;td>"+points+" / "+possible+"&lt;/td>&lt;td>"+(exactOk?'&lt;span class=\"pill ok\">Exact&lt;/span>':'&lt;span class=\"pill err\">Not exact&lt;/span>')+"&lt;/td>";
+    tbody.appendChild(tr);
+  });
+  el("pointsTotal").textContent = totalPoints;
+  el("pointsPossible").textContent = totalPossible;
+  var pct = Math.round((totalPoints/Math.max(1,totalPossible))*100);
+  el("scorePct").textContent = pct + "%";
+  el("roundCorrect").textContent = exact;
+  el("qTotal2").textContent = TOTAL;
+  el("timeUsed").textContent = formatTime((8*60) - timeLeft);
+}
+
+// handlers
+el("startBtn").addEventListener("click", function(){ qNow=0; results=[]; timeLeft=8*60; show("screen-question"); startTimer(); newRound(); });
+el("howBtn").addEventListener("click", function(){ el("how").classList.toggle("hidden"); });
+el("submitBtn").addEventListener("click", submitRound);
+el("restartBtn").addEventListener("click", function(){ show("screen-menu"); });
+el("quickEndBtn").addEventListener("click", function(){ finish(); });
+
+// init
+show("screen-menu");
+el("qTotal").textContent = TOTAL; el("qTotal2").textContent = TOTAL;
+el("qNow").textContent = 0; el("timer").textContent = "08:00";
+})();
+&lt;/script>
+
+&lt;footer style="margin-top:24px;padding-top:12px;border-top:1px solid #e3e7f0;font-size:12px;color:#667085;text-align:center;">
+  Created for personal study use by the applicant community. Not official. Not for sale. Not affiliated with Wizz Air.
+&lt;/footer>
+&lt;/body>
+&lt;/html>
+</textarea>
+<textarea class="payload" id="payload-clocktime">&lt;!-- Study tool created for personal use. Do not resell or present as official material. -->
+&lt;!DOCTYPE html>
+&lt;html lang="en">
+&lt;head>
+&lt;meta charset="UTF-8" />
+&lt;meta name="viewport" content="width=device-width, initial-scale=1" />
+&lt;title>Spatial Orientation — Clock Time (v5)&lt;/title>
+&lt;style>
+  :root{
+    --card:#fff; --ink:#111; --muted:#667085; --bg:#f4f7fb; --accent:#0b66ff;
+    --ok:#1a7f37; --err:#b42318; --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.08);
+    --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--sans);display:grid;place-items:center;padding:24px}
+  .app{width:min(1100px,100%);background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:clamp(18px,2.5vw,28px)}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  h1{font-size:22px;margin:0}
+  .muted{color:var(--muted)}
+  button{appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;letter-spacing:.2px}
+  button.primary{background:var(--accent);color:#fff}
+  button.secondary{background:#e7eefc;color:#0b2d66}
+  button.danger{background:#ff4c4c;color:#fff}
+  button:disabled{opacity:.5; cursor:not-allowed}
+  .center{display:grid;place-items:center;gap:16px;text-align:center;min-height:360px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .card{border:1px solid #e9eef6;border-radius:12px;padding:14px;background:#fbfdff}
+  .hidden{display:none !important}
+  .clockWrap{display:grid;place-items:center}
+  canvas{background:#fff;border:2px solid #00000033;border-radius:50%;box-shadow: inset 0 0 0 4px #f5f7fb;}
+  input[type="text"]{width:200px;padding:12px 14px;border:1px solid #d8e1ee;border-radius:10px;font-size:20px;letter-spacing:2px;text-align:center}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th, td{padding:10px;border-bottom:1px solid #eef2f8;text-align:left}
+  tr.ok td{background:#f3fcf6}
+  tr.err td{background:#fff5f5}
+  .pill{padding:2px 8px;border-radius:999px;font-size:12px;font-weight:800}
+  .pill.ok{background:#e8f6ed;color:#145a32}
+  .pill.err{background:#fde8e7;color:#7a271a}
+&lt;/style>
+&lt;/head>
+&lt;body>
+&lt;div class="app" id="app">
+  &lt;header>
+    &lt;h1>Spatial Orientation &lt;span class="muted">— clock time&lt;/span>&lt;/h1>
+    &lt;div class="muted">Task: &lt;b id="qNow">0&lt;/b>/&lt;b id="qTotal">50&lt;/b>&lt;/div>
+    &lt;div class="muted" id="timer" style="font-weight:800; color:#0b2d66; background:#e7eefc; padding:6px 10px; border-radius:10px">10:00&lt;/div>
+  &lt;/header>
+
+  &lt;section id="screen-menu" class="center">
+    &lt;h2>Welcome&lt;/h2>
+    &lt;p class="muted">Look at the clock and enter the time as a &lt;b>4‑digit number (HHMM)&lt;/b>. Example: 12:50 → &lt;b>1250&lt;/b>.&lt;/p>
+    &lt;ul class="muted" style="text-align:left; max-width:720px">
+      &lt;li>&lt;b>50 tasks&lt;/b> in &lt;b>10 minutes&lt;/b>.&lt;/li>
+      &lt;li>Face shows one random numeral (1–12). The entire clock is rotated by a random angle each round.&lt;/li>
+      &lt;li>The numeral stays &lt;b>upright&lt;/b>. Hands snap exactly to hour/minute marks. No immediate repeats.&lt;/li>
+    &lt;/ul>
+    &lt;div class="row">
+      &lt;button id="startBtn" class="primary">Start&lt;/button>
+      &lt;button id="howBtn" class="secondary">How it works&lt;/button>
+    &lt;/div>
+    &lt;div id="how" class="card hidden" style="max-width:720px">
+      &lt;p>Read the time relative to the single numeral and tick marks—even with arbitrary rotation. Answer as HHMM.&lt;/p>
+    &lt;/div>
+  &lt;/section>
+
+  &lt;section id="screen-question" class="hidden">
+    &lt;div class="card" style="display:grid;grid-template-columns:1fr 1fr; gap:16px; align-items:center">
+      &lt;div class="clockWrap">&lt;canvas id="clock" width="320" height="320">&lt;/canvas>&lt;/div>
+      &lt;div>
+        &lt;div class="muted">Enter the time (HHMM)&lt;/div>
+        &lt;input id="answerInput" type="text" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="HHMM" />
+        &lt;div class="row" style="justify-content:space-between;margin-top:12px">
+          &lt;button id="quickEndBtn" class="danger">Quick End&lt;/button>
+          &lt;button id="submitBtn" class="primary" disabled>Submit&lt;/button>
+        &lt;/div>
+      &lt;/div>
+    &lt;/div>
+  &lt;/section>
+
+  &lt;section id="screen-results" class="hidden">
+    &lt;h2>Results&lt;/h2>
+    &lt;div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      &lt;div>&lt;b>Score:&lt;/b> &lt;span id="scorePct">0%&lt;/span>&lt;/div>
+      &lt;div class="muted">Correct: &lt;b id="roundCorrect">0&lt;/b> / &lt;b id="qTotal2">50&lt;/b>&lt;/div>
+      &lt;div class="muted">Time used: &lt;b id="timeUsed">—&lt;/b>&lt;/div>
+    &lt;/div>
+    &lt;table id="resultsTable">
+      &lt;thead>&lt;tr>&lt;th>#&lt;/th>&lt;th>Clock&lt;/th>&lt;th>Your answer&lt;/th>&lt;th>Correct&lt;/th>&lt;th>Status&lt;/th>&lt;/tr>&lt;/thead>
+      &lt;tbody>&lt;/tbody>
+    &lt;/table>
+    &lt;div class="row" style="margin-top:12px; justify-content:flex-end">
+      &lt;button id="restartBtn" class="secondary">Restart&lt;/button>
+    &lt;/div>
+  &lt;/section>
+&lt;/div>
+
+&lt;script>
+(function(){
+function el(id){ return document.getElementById(id); }
+function show(name){ ["screen-menu","screen-question","screen-results"].forEach(i=>el(i).classList.add("hidden")); el(name).classList.remove("hidden"); }
+function randChoice(a){ return a[Math.floor(Math.random()*a.length)]; }
+function pad2(n){ return (n&lt;10?"0":"")+n; }
+var TOTAL=50, DURATION=10*60;
+var qNow=0, timeLeft=DURATION, timerId=null;
+var results=[], prevTimeKey=null, prevFaceKey=null;
+var round=null;
+
+// Draw clock with bold visuals; numeral is upright with a white halo to prevent overlap
+function drawClock(canvas, hh, mm, labelNum, rotDeg){
+  var ctx = canvas.getContext("2d");
+  var w=canvas.width, h=canvas.height, cx=w/2, cy=h/2, r=Math.min(cx,cy)-12;
+  ctx.clearRect(0,0,w,h);
+
+  // Rotated face + hands
+  ctx.save();
+  ctx.translate(cx,cy);
+  var rot = rotDeg * Math.PI/180;
+  ctx.rotate(rot);
+
+  // Outer rim (bolder)
+  ctx.lineWidth=8; ctx.strokeStyle="#000"; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+
+  // Major/minor ticks (darker)
+  for(var i=0;i&lt;60;i++){
+    var ang = Math.PI*2*i/60;
+    var rr = r-10; var len = (i%5===0)?16:8;
+    ctx.lineWidth = (i%5===0)?4:2;
+    ctx.strokeStyle = (i%5===0) ? "#000" : "#333";
+    ctx.beginPath();
+    ctx.moveTo(rr*Math.cos(ang), rr*Math.sin(ang));
+    ctx.lineTo((rr-len)*Math.cos(ang), (rr-len)*Math.sin(ang));
+    ctx.stroke();
+  }
+
+  // Hands (bold)
+  var minuteAngle = Math.PI*2*(mm/60) - Math.PI/2;
+  var hourAngle = Math.PI*2*((hh%12)/12) - Math.PI/2;
+  ctx.lineCap="round";
+  // hour
+  ctx.strokeStyle="#000";
+  ctx.lineWidth=8;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo((r*0.52)*Math.cos(hourAngle),(r*0.52)*Math.sin(hourAngle)); ctx.stroke();
+  // minute
+  ctx.lineWidth=5;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo((r*0.78)*Math.cos(minuteAngle),(r*0.78)*Math.sin(minuteAngle)); ctx.stroke();
+  // center cap
+  ctx.fillStyle="#000"; ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fill();
+
+  ctx.restore();
+
+  // Upright numeral position (in world coords), with halo to avoid overlap
+  var ang0 = Math.PI*2*(labelNum/12) - Math.PI/2;
+  var xr = (r-36)*Math.cos(ang0);
+  var yr = (r-36)*Math.sin(ang0);
+  var x = cx + xr*Math.cos(rot) - yr*Math.sin(rot);
+  var y = cy + xr*Math.sin(rot) + yr*Math.cos(rot);
+
+  // White halo plate
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.fillStyle = "#fff";
+  ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2); ctx.fill();
+  // Upright numeral on top
+  ctx.fillStyle="#000";
+  ctx.font="bold 18px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(String(labelNum), 0, 0);
+  ctx.restore();
+}
+
+function generateTime(){
+  var minutes=[0,5,10,15,20,25,30,35,40,45,50,55];
+  var h, m, key;
+  do { h = 1+Math.floor(Math.random()*12); m = randChoice(minutes); key=h+"-"+m; } while(key===prevTimeKey);
+  prevTimeKey = key; return {h:h,m:m};
+}
+
+function generateFace(){
+  var label, rotDeg, key, attempts=0;
+  do {
+    label = 1 + Math.floor(Math.random()*12);
+    rotDeg = Math.random()*360;
+    key = label + "-" + Math.round(rotDeg);
+    attempts++;
+  } while(key===prevFaceKey &amp;&amp; attempts &lt; 50);
+  prevFaceKey = key;
+  return {label:label, rotDeg:rotDeg};
+}
+
+function expectedAnswer(h,m){ return pad2(h)+pad2(m); }
+
+function startTimer(){
+  el("timer").textContent = fmt(timeLeft);
+  timerId = setInterval(function(){
+    timeLeft--;
+    if(timeLeft &lt; 0){ clearInterval(timerId); finish(); return; }
+    el("timer").textContent = fmt(timeLeft);
+  }, 1000);
+}
+function fmt(s){ var m=Math.floor(s/60), ss=s%60; return (m&lt;10?"0":"")+m+":"+(ss&lt;10?"0":"")+ss; }
+
+function newRound(){
+  qNow++; el("qNow").textContent = qNow;
+  var t = generateTime();
+  var f = generateFace();
+  round = { h:t.h, m:t.m, correct: expectedAnswer(t.h,t.m), label: f.label, rotDeg: f.rotDeg };
+  renderQuestion();
+}
+
+function renderQuestion(){
+  show("screen-question");
+  drawClock(el("clock"), round.h, round.m, round.label, round.rotDeg);
+  var inp = el("answerInput"); var btn = el("submitBtn");
+  inp.value=""; btn.disabled=true;
+  inp.oninput = function(){
+    var v = (inp.value||"").replace(/\\D+/g,"").slice(0,4);
+    if(v!==inp.value) inp.value=v;
+    btn.disabled = (v.length!==4);
+  };
+  setTimeout(function(){ inp.focus({preventScroll:true}); }, 10);
+}
+
+function submitRound(){
+  var v = (el("answerInput").value||"").replace(/\\D+/g,"");
+  if(v.length!==4) return;
+  var ok = (v === round.correct);
+  results.push({ idx:qNow, shown: round.correct, user:v, ok:ok });
+  if(qNow>=TOTAL){ finish(); } else { newRound(); }
+}
+
+function finish(){
+  clearInterval(timerId);
+  show("screen-results");
+  var tbody = el("resultsTable").querySelector("tbody"); tbody.innerHTML="";
+  var correct=0;
+  results.forEach(function(r){
+    if(r.ok) correct++;
+    var tr = document.createElement("tr"); tr.className = r.ok ? "ok" : "err";
+    function fmtHHMM(s){ return s.slice(0,2)+":"+s.slice(2); }
+    tr.innerHTML = "&lt;td>"+r.idx+"&lt;/td>&lt;td>"+fmtHHMM(r.shown)+"&lt;/td>&lt;td>"+fmtHHMM(r.user)+"&lt;/td>&lt;td>"+fmtHHMM(r.shown)+"&lt;/td>&lt;td>"+(r.ok?'&lt;span class=\\"pill ok\\">Correct&lt;/span>':'&lt;span class=\\"pill err\\">Wrong&lt;/span>')+"&lt;/td>";
+    tbody.appendChild(tr);
+  });
+  var pct = Math.round((correct/Math.max(1,results.length))*100);
+  el("roundCorrect").textContent = correct; el("qTotal2").textContent = TOTAL; el("scorePct").textContent = pct + "%"; el("timeUsed").textContent = fmt(DURATION - timeLeft);
+}
+
+// handlers
+el("startBtn").addEventListener("click", function(){ qNow=0; results=[]; timeLeft=DURATION; prevTimeKey=null; prevFaceKey=null; startTimer(); newRound(); });
+el("howBtn").addEventListener("click", function(){ el("how").classList.toggle("hidden"); });
+el("submitBtn").addEventListener("click", submitRound);
+el("answerInput").addEventListener("keydown", function(ev){ if(ev.key==="Enter" &amp;&amp; !el("submitBtn").disabled) submitRound(); });
+el("restartBtn").addEventListener("click", function(){ show("screen-menu"); });
+el("quickEndBtn").addEventListener("click", function(){ finish(); });
+
+// init
+show("screen-menu"); el("qTotal").textContent=TOTAL; el("qTotal2").textContent=TOTAL; el("qNow").textContent=0; el("timer").textContent="10:00";
+})();
+&lt;/script>
+
+&lt;footer style="margin-top:24px;padding-top:12px;border-top:1px solid #e3e7f0;font-size:12px;color:#667085;text-align:center;">
+  Created for personal study use by the applicant community. Not official. Not for sale. Not affiliated with Wizz Air.
+&lt;/footer>
+&lt;/body>
+&lt;/html>
+</textarea>
+<textarea class="payload" id="payload-sixclocks">&lt;!-- Study tool created for personal use. Do not resell or present as official material. -->
+&lt;!DOCTYPE html>
+&lt;html lang="en">
+&lt;head>
+&lt;meta charset="utf-8">
+&lt;meta name="viewport" content="width=device-width, initial-scale=1" />
+&lt;title>6 Clocks • Color + Shape • Sessions&lt;/title>
+&lt;style>
+:root{
+  --ink:#0f172a; --bg:#f6f7fb; --muted:#6b7280;
+  --red-bg:#ffd7db; --red-stroke:#b00020; --white-bg:#ffffff; --white-stroke:#93a2b7;
+  --csize:190px; --gap:10px; --accent:#2563eb; --accent-bg:#eef2ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:1100px;margin:0 auto;padding:22px}
+h1{margin:.2rem 0 .6rem;font-size:28px}
+h2{margin:.2rem 0 .6rem;font-size:22px}
+p{margin:.4rem 0}
+.center{display:flex;justify-content:center;align-items:center;gap:10px}
+.btn{background:#111;color:#fff;border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.sec{background:#e5e7eb;color:#111}
+.muted{color:var(--muted)}
+.bar{height:10px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin-top:8px}
+.bar>div{height:100%;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);transform-origin:left center;transform:scaleX(1)}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 0 rgba(0,0,0,.06),0 10px 30px rgba(0,0,0,.06)}
+.rows{display:flex;flex-direction:column;gap:var(--gap);margin:12px auto;width:fit-content}
+.row{display:grid;gap:var(--gap);justify-content:center;align-items:center}
+.row.top{grid-template-columns:repeat(3,var(--csize))}
+.row.mid{grid-template-columns:repeat(2,var(--csize))}
+.row.bot{grid-template-columns:var(--csize)}
+.cell{width:var(--csize);height:var(--csize);display:flex;justify-content:center;align-items:center}
+canvas{width:var(--csize);height:var(--csize);background:#fff;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.red-bg{background:var(--red-bg)!important;box-shadow:inset 0 0 0 3px var(--red-stroke)}
+.white-bg{background:var(--white-bg)!important;box-shadow:inset 0 0 0 3px var(--white-stroke)}
+.inputs{display:grid;grid-template-columns:repeat(6,70px);gap:10px;justify-content:center;margin:12px 0}
+.inputs input{width:70px;height:60px;font-size:28px;text-align:center;border:2px solid #111;border-radius:12px}
+.pill{display:inline-block;padding:6px 14px;border-radius:999px;background:var(--accent-bg);color:var(--accent);font-weight:800;letter-spacing:.5px}
+.final-score{font-size:28px;font-weight:800;color:var(--accent)}
+.ruleBig{font-size:40px;font-weight:900;text-align:center;margin:18px 0}
+.roundTiny{font-size:14px;color:var(--muted);text-align:center;margin-top:-4px}
+.menuHint{margin-top:10px;text-align:center}
+.sessionBtns{display:flex;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.sessionBtns .btn{min-width:180px}
+&lt;/style>
+&lt;/head>
+&lt;body>
+&lt;div class="wrap">
+
+  &lt;!-- MENU -->
+  &lt;div id="menuScreen" class="screen active">
+    &lt;div class="card">
+      &lt;h1>6 Clocks — Color + Shape&lt;/h1>
+      &lt;p class="menuHint">Choose a session type. Each round shows a large highlight telling exactly which clocks to read.&lt;/p>
+      &lt;div class="sessionBtns">
+        &lt;button class="btn" id="btnPractice">Practice session (10 rounds)&lt;/button>
+        &lt;button class="btn sec" id="btnPro">Pro session (30 rounds)&lt;/button>
+      &lt;/div>
+    &lt;/div>
+  &lt;/div>
+
+  &lt;!-- RULE -->
+  &lt;div id="ruleScreen" class="screen">
+    &lt;div class="card">
+      &lt;div class="roundTiny" id="roundTiny">Round 1 / 10&lt;/div>
+      &lt;div class="ruleBig">&lt;span class="pill" id="rulePill">READ: WHITE + CIRCLE&lt;/span>&lt;/div>
+      &lt;div class="bar">&lt;div id="ruleBar">&lt;/div>&lt;/div>
+    &lt;/div>
+  &lt;/div>
+
+  &lt;!-- CLOCKS -->
+  &lt;div id="clocksScreen" class="screen">
+    &lt;div class="card">
+      &lt;h2>Clocks (4s) &lt;span id="hintPill" class="pill">&lt;/span>&lt;/h2>
+      &lt;div class="rows" id="rows">
+        &lt;div class="row top" id="rowTop">&lt;/div>
+        &lt;div class="row mid" id="rowMid">&lt;/div>
+        &lt;div class="row bot" id="rowBot">&lt;/div>
+      &lt;/div>
+      &lt;div class="bar">&lt;div id="clockBar">&lt;/div>&lt;/div>
+    &lt;/div>
+  &lt;/div>
+
+  &lt;!-- INPUTS -->
+  &lt;div id="inputScreen" class="screen">
+    &lt;div class="card">
+      &lt;h2>Enter answers&lt;/h2>
+      &lt;p class="muted">Order: left → right, row by row. Enter 1–8 for targets (&lt;span id="targetDesc">&lt;/span>), 0 for non-targets.&lt;/p>
+      &lt;div class="inputs">
+        &lt;input id="a0" maxlength="1" inputmode="numeric" placeholder="1–8/0">
+        &lt;input id="a1" maxlength="1" inputmode="numeric" placeholder="1–8/0">
+        &lt;input id="a2" maxlength="1" inputmode="numeric" placeholder="1–8/0">
+        &lt;input id="a3" maxlength="1" inputmode="numeric" placeholder="1–8/0">
+        &lt;input id="a4" maxlength="1" inputmode="numeric" placeholder="1–8/0">
+        &lt;input id="a5" maxlength="1" inputmode="numeric" placeholder="1–8/0">
+      &lt;/div>
+      &lt;div class="center">
+        &lt;button class="btn" id="btnSubmit" disabled>Submit&lt;/button>
+        &lt;button class="btn" id="btnNext" style="display:none">Next Round&lt;/button>
+      &lt;/div>
+      &lt;p id="feedback" style="font-weight:700">&lt;/p>
+    &lt;/div>
+  &lt;/div>
+
+  &lt;!-- FINAL -->
+  &lt;div id="finalScreen" class="screen">
+    &lt;div class="card">
+      &lt;h2>Final result&lt;/h2>
+      &lt;p class="final-score" id="finalPercent">0%&lt;/p>
+      &lt;p id="finalDetails" class="muted">&lt;/p>
+      &lt;div class="center">
+        &lt;button class="btn sec" id="btnToMenu">Back to menu&lt;/button>
+        &lt;button class="btn" id="btnRestart">Play again&lt;/button>
+      &lt;/div>
+    &lt;/div>
+  &lt;/div>
+
+&lt;/div>
+
+&lt;script>
+// Utility
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pickTwoDistinctExcluding(pool, exclude){
+  const arr = pool.filter(v=>v!==exclude);
+  const a = arr[randInt(0,arr.length-1)];
+  let b; do{ b = arr[randInt(0,arr.length-1)]; }while(b===a || b===exclude);
+  return [a,b];
+}
+
+const CSIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--csize'));
+const SHAPES = ['circle','square'];
+
+// Clock builder (no hand on printed numbers)
+function buildClock(color, shape){
+  const rotSteps = randInt(0,7);
+  const handIdx = randInt(1,8);
+  let r = (handIdx - rotSteps) % 8; if(r&lt;=0) r += 8;
+  const labels = pickTwoDistinctExcluding([1,2,3,4,5,6,7,8], r); // exclude answer index
+  return {rotSteps, handIdx, labels, color, shape, answer: r};
+}
+
+function drawClock(canvas, cfg){
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height, CX=W/2, CY=H/2, R=Math.min(W,H)/2 - 8;
+  ctx.clearRect(0,0,W,H);
+  const redBg = getComputedStyle(document.documentElement).getPropertyValue('--red-bg').trim()||'#ffd7db';
+  const redStroke = getComputedStyle(document.documentElement).getPropertyValue('--red-stroke').trim()||'#b00020';
+  const whiteBg = getComputedStyle(document.documentElement).getPropertyValue('--white-bg').trim()||'#ffffff';
+  const whiteStroke = getComputedStyle(document.documentElement).getPropertyValue('--white-stroke').trim()||'#93a2b7';
+  const bg = (cfg.color==='red') ? redBg : whiteBg;
+  const stroke = (cfg.color==='red') ? redStroke : whiteStroke;
+
+  // disc
+  ctx.fillStyle = bg; ctx.strokeStyle = stroke; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(CX,CY,R-2,0,Math.PI*2); ctx.fill(); ctx.stroke();
+
+  // ticks (hide where numbers exist) + numbers aligned to ticks
+  ctx.save(); ctx.translate(CX,CY); ctx.rotate(cfg.rotSteps * 45 * Math.PI/180);
+  const labelSet = new Set(cfg.labels);
+  for(let i=0;i&lt;8;i++){
+    const n = i+1;
+    const ang = -Math.PI/2 + i*(Math.PI/4);
+    const inner = R - 24, outer = R - 6;
+    if(!labelSet.has(n)){
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(ang)*inner, Math.sin(ang)*inner);
+      ctx.lineTo(Math.cos(ang)*outer, Math.sin(ang)*outer);
+      ctx.lineWidth = 3; ctx.strokeStyle = '#111'; ctx.stroke();
+    }
+  }
+  const numRadius = R - 12;
+  ctx.restore();
+
+  ctx.fillStyle='#111'; ctx.font='bold 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(const n of cfg.labels){
+    const ang = -Math.PI/2 + (n-1)*(Math.PI/4) + cfg.rotSteps * 45 * Math.PI/180;
+    const x = CX + Math.cos(ang)*numRadius;
+    const y = CY + Math.sin(ang)*numRadius;
+    ctx.fillText(String(n), x, y);
+  }
+
+  // hand
+  const angHand = -Math.PI/2 + (cfg.handIdx-1)*(Math.PI/4);
+  ctx.beginPath(); ctx.lineCap='round'; ctx.lineWidth=6; ctx.strokeStyle='#0f172a';
+  ctx.moveTo(CX,CY);
+  ctx.lineTo(CX + Math.cos(angHand)*(R-52), CY + Math.sin(angHand)*(R-52));
+  ctx.stroke();
+
+  // center shape (20% larger)
+  ctx.fillStyle='#0f172a';
+  const sq = 14 * 1.2, rad = 7 * 1.2;
+  if(cfg.shape==='circle'){ ctx.beginPath(); ctx.arc(CX,CY,rad,0,Math.PI*2); ctx.fill(); }
+  else{ ctx.fillRect(CX - sq/2, CY - sq/2, sq, sq); }
+}
+
+// --- Game state (per session) ---
+let ROUNDS_TOTAL = 10; // default; set by session chooser
+let MAX_POINTS = 0;
+const POINT_PER_TARGET = 1.0;
+const POINT_PER_CORRECT_ZERO = 0.5;
+
+let roundIdx = 0;
+let targetColor = 'white';
+let targetShape = 'circle';
+let clocks = [];
+let correctSeq = [];
+let runPoints = 0;
+
+// Session selection
+document.getElementById('btnPractice').addEventListener('click', ()=>startGame(10));
+document.getElementById('btnPro').addEventListener('click', ()=>startGame(30));
+
+// Buttons
+const btnSubmit=document.getElementById('btnSubmit');
+const btnNext=document.getElementById('btnNext');
+const btnRestart=document.getElementById('btnRestart');
+const btnToMenu=document.getElementById('btnToMenu');
+
+btnSubmit.addEventListener('click',submitAnswers);
+btnNext.addEventListener('click',nextRound);
+btnRestart?.addEventListener('click',()=>showScreen('menuScreen'));
+btnToMenu?.addEventListener('click',()=>showScreen('menuScreen'));
+
+// Enter to submit
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&amp;&amp;document.getElementById('inputScreen').classList.contains('active')){
+    if(!btnSubmit.disabled) submitAnswers();
+  }
+});
+
+function startGame(rounds){
+  ROUNDS_TOTAL = rounds;
+  MAX_POINTS = ROUNDS_TOTAL * (4*POINT_PER_TARGET + 2*POINT_PER_CORRECT_ZERO); // same theoretical max scaling
+  roundIdx=0; runPoints=0;
+  nextRound();
+}
+
+function prepareRound(){
+  // choose target rule
+  targetColor = (roundIdx % 2 === 0) ? 'white' : 'red';
+  targetShape = SHAPES[randInt(0, SHAPES.length-1)];
+
+  // exactly 3 or 4 targets randomly
+  const numTargets = randInt(3,4);
+  const targetIdxs = new Set();
+  while(targetIdxs.size &lt; numTargets){ targetIdxs.add(randInt(0,5)); }
+
+  clocks = [];
+  for(let i=0;i&lt;6;i++){
+    let color, shape;
+    if(targetIdxs.has(i)){
+      color = targetColor; shape = targetShape;
+    }else{
+      color = (Math.random()&lt;0.5)?'red':'white';
+      shape = SHAPES[randInt(0,1)];
+      if(color===targetColor &amp;&amp; shape===targetShape){
+        // avoid accidental match
+        shape = (shape==='circle') ? 'square' : 'circle';
+      }
+    }
+    clocks.push(buildClock(color, shape));
+  }
+  correctSeq = clocks.map(c => ((c.color===targetColor &amp;&amp; c.shape===targetShape) ? String(c.answer) : '0'));
+}
+
+function renderClocks(){
+  const rowTop=document.getElementById('rowTop');
+  const rowMid=document.getElementById('rowMid');
+  const rowBot=document.getElementById('rowBot');
+  rowTop.innerHTML=''; rowMid.innerHTML=''; rowBot.innerHTML='';
+  for(let i=0;i&lt;6;i++){
+    const cell=document.createElement('div');
+    cell.className='cell';
+    const c=document.createElement('canvas');
+    c.width=CSIZE; c.height=CSIZE;
+    cell.appendChild(c);
+    if(i&lt;3) rowTop.appendChild(cell);
+    else if(i&lt;5) rowMid.appendChild(cell);
+    else rowBot.appendChild(cell);
+    c.classList.add(clocks[i].color==='red' ? 'red-bg':'white-bg');
+    drawClock(c,clocks[i]);
+  }
+}
+
+function nextRound(){
+  if(roundIdx>=ROUNDS_TOTAL){
+    const percent=Math.round((runPoints/MAX_POINTS)*100);
+    document.getElementById('finalPercent').textContent=percent+'%';
+    document.getElementById('finalDetails').textContent=`Points: ${runPoints.toFixed(1)} / ${MAX_POINTS} (1p target, 0.5p zero).`;
+    showScreen('finalScreen');return;
+  }
+  prepareRound();
+  const targetDesc=`${targetColor.toUpperCase()} + ${targetShape.toUpperCase()}`;
+  document.getElementById('targetDesc').textContent=targetDesc;
+  document.getElementById('hintPill').textContent=targetDesc;
+  document.getElementById('roundTiny').textContent=`Round ${roundIdx+1} / ${ROUNDS_TOTAL}`;
+  document.getElementById('rulePill').textContent=`READ: ${targetDesc}`;
+  ['a0','a1','a2','a3','a4','a5'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('feedback').textContent='';btnSubmit.disabled=true;btnNext.style.display='none';
+  showScreen('ruleScreen');let bar=document.getElementById('ruleBar');let start=performance.now();let dur=3000;
+  let timer=setInterval(()=>{let t=performance.now()-start;let f=Math.max(0,1-t/dur);bar.style.transform='scaleX('+f+')';if(t>=dur){clearInterval(timer);showClocks();}},50);
+}
+
+function showClocks(){
+  renderClocks();showScreen('clocksScreen');let bar=document.getElementById('clockBar');let start=performance.now();let dur=4000;
+  let timer=setInterval(()=>{let t=performance.now()-start;let f=Math.max(0,1-t/dur);bar.style.transform='scaleX('+f+')';if(t>=dur){clearInterval(timer);showScreen('inputScreen');document.getElementById('a0').focus();}},50);
+}
+
+function submitAnswers(){
+  const ids=['a0','a1','a2','a3','a4','a5'];const vals=ids.map(id=>(document.getElementById(id).value||'').trim());
+  let correctTargets=0;let correctZeros=0;
+  for(let i=0;i&lt;6;i++){
+    const isTarget=(clocks[i].color===targetColor&amp;&amp;clocks[i].shape===targetShape);
+    if(isTarget){ if(vals[i]===String(clocks[i].answer)) correctTargets++; }
+    else{ if(vals[i]==='0') correctZeros++; }
+  }
+  const roundPoints=correctTargets*POINT_PER_TARGET+correctZeros*POINT_PER_CORRECT_ZERO;
+  runPoints+=roundPoints;
+  document.getElementById('feedback').textContent=`Targets: ${correctTargets} • Zeros: ${correctZeros} → ${roundPoints.toFixed(1)}p | Correct: ${correctSeq.join(' ')}`;
+  btnNext.style.display='inline-block';roundIdx++;
+}
+
+// Inputs UX
+const inputs = Array.from(document.querySelectorAll('.inputs input'));
+function validateInputsEnableSubmit(){
+  const allFilled = inputs.every(el => el.value &amp;&amp; el.value.length===1);
+  document.getElementById('btnSubmit').disabled = !allFilled;
+}
+inputs.forEach((el, i)=>{
+  el.addEventListener('input', ()=>{
+    el.value = el.value.replace(/\\D/g,'').slice(0,1);
+    if(el.value &amp;&amp; i &lt; inputs.length-1) inputs[i+1].focus();
+    validateInputsEnableSubmit();
+  });
+  el.addEventListener('keydown', (e)=>{
+    if(e.key === 'Backspace' &amp;&amp; !el.value &amp;&amp; i>0){ inputs[i-1].focus(); }
+    if(e.key === 'ArrowLeft' &amp;&amp; i>0){ inputs[i-1].focus(); e.preventDefault(); }
+    if(e.key === 'ArrowRight' &amp;&amp; i&lt;inputs.length-1){ inputs[i+1].focus(); e.preventDefault(); }
+  });
+});
+&lt;/script>
+
+&lt;footer style="margin-top:24px;padding-top:12px;border-top:1px solid #e3e7f0;font-size:12px;color:#667085;text-align:center;">
+  Created for personal study use by the applicant community. Not official. Not for sale. Not affiliated with Wizz Air.
+&lt;/footer>
+&lt;/body>
+&lt;/html>
+</textarea>
+
+<script>
+(function(){
+  var MODULES = [
+    {
+      key:"arith", store:"payload-arith",
+      title:"Mental Arithmetic", tag:"MATH",
+      desc:"Spoken sums, differences, products, squares and roots — answer before the timer runs out.",
+      spec:"Voice-driven · timed per question",
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h16"/><path d="M17 15l4 4m0-4l-4 4"/></svg>'
+    },
+    {
+      key:"acoustic", store:"payload-acoustic",
+      title:"Acoustic Memory", tag:"MEMORY",
+      desc:"Listen to a spoken digit sequence, then reproduce it exactly in order.",
+      spec:"20 rounds · 7–9 digits",
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16 8a5 5 0 010 8M19 5a9 9 0 010 14"/></svg>'
+    },
+    {
+      key:"concentration", store:"payload-concentration",
+      title:"Concentration", tag:"SPEED",
+      desc:"Two digits, a rule, one fast answer. Work through as many micro-tasks as you can.",
+      spec:"150 tasks · 9 minutes",
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6" fill="currentColor"/></svg>'
+    },
+    {
+      key:"passcodes", store:"payload-passcodes",
+      title:"Passcode Patterns", tag:"LOGIC",
+      desc:"Decode a symbol passcode and pick the word or words that share its letter pattern.",
+      spec:"25 questions · 8 minutes",
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>'
+    },
+    {
+      key:"clocktime", store:"payload-clocktime",
+      title:"Clock Time", tag:"SPATIAL",
+      desc:"Read a rotated analog clock face using a single fixed numeral as your reference point.",
+      spec:"50 tasks · 10 minutes",
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>'
+    },
+    {
+      key:"sixclocks", store:"payload-sixclocks",
+      title:"Six Clocks", tag:"SPATIAL",
+      desc:"A grid of six clocks flashes briefly; report the time on only the color and shape called out.",
+      spec:"Practice or Pro session",
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg>'
+    }
+  ];
+
+  var grid = document.getElementById("cardGrid");
+  MODULES.forEach(function(m){
+    var card = document.createElement("button");
+    card.className = "card";
+    card.innerHTML =
+      '<div class="card-top">' +
+        '<div class="card-icon">'+m.icon+'</div>' +
+        '<div class="card-tag">'+m.tag+'</div>' +
+      '</div>' +
+      '<h3>'+m.title+'</h3>' +
+      '<p>'+m.desc+'</p>' +
+      '<div class="card-foot"><span class="card-spec">'+m.spec+'</span><span class="launch">Start →</span></div>';
+    card.addEventListener("click", function(){ launch(m); });
+    grid.appendChild(card);
+  });
+
+  function launch(m){
+    var ta = document.getElementById(m.store);
+    var frame = document.getElementById("gameFrame");
+    frame.srcdoc = ta.value;
+    document.getElementById("playerTitle").textContent = m.title;
+    document.getElementById("player").classList.add("active");
+    try{
+      localStorage.setItem("wapa-trainer-last", m.title + " · " + new Date().toLocaleDateString());
+    }catch(e){}
+    refreshLast();
+  }
+
+  document.getElementById("backBtn").addEventListener("click", function(){
+    document.getElementById("player").classList.remove("active");
+    document.getElementById("gameFrame").srcdoc = "about:blank";
+  });
+
+  function refreshLast(){
+    try{
+      var v = localStorage.getItem("wapa-trainer-last");
+      if(v) document.getElementById("statLast").textContent = v.split(" · ")[0];
+    }catch(e){}
+  }
+  refreshLast();
+})();
+</script>
+</body>
+</html>
