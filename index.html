@@ -2574,12 +2574,16 @@ show("screen-menu"); el("qTotal").textContent=TOTAL; el("qTotal2").textContent=T
   --csize:190px; --gap:10px; --accent:#2563eb; --accent-bg:#eef2ff;
 }
 @media (max-width:560px){
-  :root{ --csize: clamp(64px, 24vw, 190px); --gap:8px; }
+  :root{ --csize: 100px; --gap:8px; }
+}
+@media (max-width:380px){
+  :root{ --csize: 82px; --gap:6px; }
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
 .wrap{max-width:1100px;margin:0 auto;padding:22px}
+@media (max-width:560px){ .wrap{padding:12px} }
 h1{margin:.2rem 0 .6rem;font-size:28px}
 h2{margin:.2rem 0 .6rem;font-size:22px}
 p{margin:.4rem 0}
