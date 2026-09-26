@@ -719,7 +719,17 @@
       }
 
       .topbar {
-        padding: 16px 18px;
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        row-gap: 6px;
+      }
+
+      .brand {
+        font-size: .92rem;
+      }
+
+      .app {
+        min-height: 0;
       }
 
       .question-area {
@@ -1375,6 +1385,12 @@
       if ("speechSynthesis" in window) {
         // Some browsers need a user gesture first.
         speechSynthesis.cancel();
+        // iOS/Safari only unlocks speech synthesis if speak() is called
+        // synchronously inside a user gesture. Prime it here with a near-silent
+        // utterance so the later, delayed speak() calls during the game are able to play.
+        var primer = new SpeechSynthesisUtterance(' ');
+        primer.volume = 0.01;
+        speechSynthesis.speak(primer);
       }
       startGame();
     });
@@ -1685,7 +1701,15 @@ el("startBtn").addEventListener("click", function(){
   try{
     resetGame();
     if('speechSynthesis' in window){
-      try{ window.speechSynthesis.cancel(); }catch(e){}
+      try{
+        window.speechSynthesis.cancel();
+        // iOS/Safari only unlocks speech synthesis if speak() is called
+        // synchronously inside a user gesture. Prime it here with a near-silent
+        // utterance so the later, delayed speakDigit() calls are able to play.
+        var primer = new SpeechSynthesisUtterance(' ');
+        primer.volume = 0.01;
+        window.speechSynthesis.speak(primer);
+      }catch(e){}
     }
     nextRound();
   }catch(e){
@@ -2294,8 +2318,13 @@ el("qNow").textContent = 0; el("timer").textContent = "08:00";
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .card{border:1px solid #e9eef6;border-radius:12px;padding:14px;background:#fbfdff}
   .hidden{display:none !important}
-  .clockWrap{display:grid;place-items:center}
-  canvas{background:#fff;border:2px solid #00000033;border-radius:50%;box-shadow: inset 0 0 0 4px #f5f7fb;}
+  .clockWrap{display:grid;place-items:center;width:100%}
+  canvas{background:#fff;border:2px solid #00000033;border-radius:50%;box-shadow: inset 0 0 0 4px #f5f7fb;max-width:100%;height:auto}
+  .clockLayout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center}
+  @media (max-width:560px){
+    .clockLayout{grid-template-columns:1fr;justify-items:center;text-align:center}
+    input[type="text"]{width:100%;max-width:240px}
+  }
   input[type="text"]{width:200px;padding:12px 14px;border:1px solid #d8e1ee;border-radius:10px;font-size:20px;letter-spacing:2px;text-align:center}
   table{width:100%;border-collapse:collapse;margin-top:12px}
   th, td{padding:10px;border-bottom:1px solid #eef2f8;text-align:left}
@@ -2332,7 +2361,7 @@ el("qNow").textContent = 0; el("timer").textContent = "08:00";
   &lt;/section>
 
   &lt;section id="screen-question" class="hidden">
-    &lt;div class="card" style="display:grid;grid-template-columns:1fr 1fr; gap:16px; align-items:center">
+    &lt;div class="card clockLayout">
       &lt;div class="clockWrap">&lt;canvas id="clock" width="320" height="320">&lt;/canvas>&lt;/div>
       &lt;div>
         &lt;div class="muted">Enter the time (HHMM)&lt;/div>
@@ -2544,6 +2573,9 @@ show("screen-menu"); el("qTotal").textContent=TOTAL; el("qTotal2").textContent=T
   --red-bg:#ffd7db; --red-stroke:#b00020; --white-bg:#ffffff; --white-stroke:#93a2b7;
   --csize:190px; --gap:10px; --accent:#2563eb; --accent-bg:#eef2ff;
 }
+@media (max-width:560px){
+  :root{ --csize: clamp(64px, 24vw, 190px); --gap:8px; }
+}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
@@ -2570,8 +2602,13 @@ p{margin:.4rem 0}
 canvas{width:var(--csize);height:var(--csize);background:#fff;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .red-bg{background:var(--red-bg)!important;box-shadow:inset 0 0 0 3px var(--red-stroke)}
 .white-bg{background:var(--white-bg)!important;box-shadow:inset 0 0 0 3px var(--white-stroke)}
-.inputs{display:grid;grid-template-columns:repeat(6,70px);gap:10px;justify-content:center;margin:12px 0}
-.inputs input{width:70px;height:60px;font-size:28px;text-align:center;border:2px solid #111;border-radius:12px}
+.inputs{display:grid;grid-template-columns:repeat(6,minmax(38px,70px));gap:10px;justify-content:center;margin:12px 0}
+.inputs input{width:100%;height:60px;font-size:28px;text-align:center;border:2px solid #111;border-radius:12px}
+@media (max-width:560px){
+  .inputs{gap:6px}
+  .inputs input{height:48px;font-size:20px}
+  .ruleBig{font-size:28px}
+}
 .pill{display:inline-block;padding:6px 14px;border-radius:999px;background:var(--accent-bg);color:var(--accent);font-weight:800;letter-spacing:.5px}
 .final-score{font-size:28px;font-weight:800;color:var(--accent)}
 .ruleBig{font-size:40px;font-weight:900;text-align:center;margin:18px 0}
