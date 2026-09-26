@@ -2574,10 +2574,10 @@ show("screen-menu"); el("qTotal").textContent=TOTAL; el("qTotal2").textContent=T
   --csize:190px; --gap:10px; --accent:#2563eb; --accent-bg:#eef2ff;
 }
 @media (max-width:560px){
-  :root{ --csize: 100px; --gap:8px; }
+  :root{ --csize: 108px; --gap:8px; }
 }
 @media (max-width:380px){
-  :root{ --csize: 82px; --gap:6px; }
+  :root{ --csize: 92px; --gap:6px; }
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
@@ -2592,8 +2592,8 @@ p{margin:.4rem 0}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .btn.sec{background:#e5e7eb;color:#111}
 .muted{color:var(--muted)}
-.bar{height:10px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin-top:8px}
-.bar>div{height:100%;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);transform-origin:left center;transform:scaleX(1)}
+.bar{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin-top:8px}
+.bar>div{height:100%;background:linear-gradient(90deg,#93c5fd,#2563eb);transform-origin:left center;transform:scaleX(1)}
 .screen{display:none}
 .screen.active{display:block}
 .card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 0 rgba(0,0,0,.06),0 10px 30px rgba(0,0,0,.06)}
@@ -2611,11 +2611,13 @@ canvas{width:var(--csize);height:var(--csize);background:#fff;border-radius:14px
 @media (max-width:560px){
   .inputs{gap:6px}
   .inputs input{height:48px;font-size:20px}
-  .ruleBig{font-size:28px}
 }
-.pill{display:inline-block;padding:6px 14px;border-radius:999px;background:var(--accent-bg);color:var(--accent);font-weight:800;letter-spacing:.5px}
+.pill{display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;background:var(--accent-bg);color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.3px;white-space:nowrap;vertical-align:middle}
 .final-score{font-size:28px;font-weight:800;color:var(--accent)}
-.ruleBig{font-size:40px;font-weight:900;text-align:center;margin:18px 0}
+.ruleBig{display:flex;justify-content:center;margin:14px 0}
+.ruleBig .pill{font-size:22px;font-weight:800;padding:10px 20px}
+@media (max-width:560px){ .ruleBig .pill{font-size:17px;padding:8px 16px} }
+h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .roundTiny{font-size:14px;color:var(--muted);text-align:center;margin-top:-4px}
 .menuHint{margin-top:10px;text-align:center}
 .sessionBtns{display:flex;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap}
@@ -2724,6 +2726,8 @@ function buildClock(color, shape){
 function drawClock(canvas, cfg){
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height, CX=W/2, CY=H/2, R=Math.min(W,H)/2 - 8;
+  const R0 = 87; // radius the original design was tuned for (csize=190 desktop)
+  const k = R / R0; // scale factor so drawing stays proportional at any canvas size
   ctx.clearRect(0,0,W,H);
   const redBg = getComputedStyle(document.documentElement).getPropertyValue('--red-bg').trim()||'#ffd7db';
   const redStroke = getComputedStyle(document.documentElement).getPropertyValue('--red-stroke').trim()||'#b00020';
@@ -2733,7 +2737,7 @@ function drawClock(canvas, cfg){
   const stroke = (cfg.color==='red') ? redStroke : whiteStroke;
 
   // disc
-  ctx.fillStyle = bg; ctx.strokeStyle = stroke; ctx.lineWidth = 3;
+  ctx.fillStyle = bg; ctx.strokeStyle = stroke; ctx.lineWidth = Math.max(1.25, 3*k);
   ctx.beginPath(); ctx.arc(CX,CY,R-2,0,Math.PI*2); ctx.fill(); ctx.stroke();
 
   // ticks (hide where numbers exist) + numbers aligned to ticks
@@ -2742,18 +2746,18 @@ function drawClock(canvas, cfg){
   for(let i=0;i&lt;8;i++){
     const n = i+1;
     const ang = -Math.PI/2 + i*(Math.PI/4);
-    const inner = R - 24, outer = R - 6;
+    const inner = R - 24*k, outer = R - 6*k;
     if(!labelSet.has(n)){
       ctx.beginPath();
       ctx.moveTo(Math.cos(ang)*inner, Math.sin(ang)*inner);
       ctx.lineTo(Math.cos(ang)*outer, Math.sin(ang)*outer);
-      ctx.lineWidth = 3; ctx.strokeStyle = '#111'; ctx.stroke();
+      ctx.lineWidth = Math.max(1, 3*k); ctx.strokeStyle = '#111'; ctx.stroke();
     }
   }
-  const numRadius = R - 12;
+  const numRadius = R - 12*k;
   ctx.restore();
 
-  ctx.fillStyle='#111'; ctx.font='bold 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillStyle='#111'; ctx.font='bold ' + Math.max(9, Math.round(22*k)) + 'px system-ui, -apple-system, Segoe UI, Roboto, Arial';
   ctx.textAlign='center'; ctx.textBaseline='middle';
   for(const n of cfg.labels){
     const ang = -Math.PI/2 + (n-1)*(Math.PI/4) + cfg.rotSteps * 45 * Math.PI/180;
@@ -2764,14 +2768,14 @@ function drawClock(canvas, cfg){
 
   // hand
   const angHand = -Math.PI/2 + (cfg.handIdx-1)*(Math.PI/4);
-  ctx.beginPath(); ctx.lineCap='round'; ctx.lineWidth=6; ctx.strokeStyle='#0f172a';
+  ctx.beginPath(); ctx.lineCap='round'; ctx.lineWidth=Math.max(2, 6*k); ctx.strokeStyle='#0f172a';
   ctx.moveTo(CX,CY);
-  ctx.lineTo(CX + Math.cos(angHand)*(R-52), CY + Math.sin(angHand)*(R-52));
+  ctx.lineTo(CX + Math.cos(angHand)*(R-52*k), CY + Math.sin(angHand)*(R-52*k));
   ctx.stroke();
 
   // center shape (20% larger)
   ctx.fillStyle='#0f172a';
-  const sq = 14 * 1.2, rad = 7 * 1.2;
+  const sq = 14 * 1.2 * k, rad = 7 * 1.2 * k;
   if(cfg.shape==='circle'){ ctx.beginPath(); ctx.arc(CX,CY,rad,0,Math.PI*2); ctx.fill(); }
   else{ ctx.fillRect(CX - sq/2, CY - sq/2, sq, sq); }
 }
