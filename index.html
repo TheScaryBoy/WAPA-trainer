@@ -1169,8 +1169,6 @@
         return;
       }
 
-      window.speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.pitch = 1;
@@ -1182,7 +1180,15 @@
       utterance.onerror = () => {
         if (typeof onEnd === "function") onEnd();
       };
-      window.speechSynthesis.speak(utterance);
+
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+        // Speaking right after cancel() clips/stutters the start of the new
+        // utterance on most engines — a short delay lets it fully reset first.
+        setTimeout(() => window.speechSynthesis.speak(utterance), 60);
+      } else {
+        window.speechSynthesis.speak(utterance);
+      }
     }
 
     function startGame() {
