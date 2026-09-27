@@ -1169,6 +1169,10 @@
         return;
       }
 
+      // No cancel() here: each question is only spoken after the previous
+      // one's onend fires (answering stays disabled until then), so there's
+      // never anything mid-speech to interrupt. Cancelling anyway was what
+      // caused the stutter at the start of every phrase.
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.pitch = 1;
@@ -1180,15 +1184,7 @@
       utterance.onerror = () => {
         if (typeof onEnd === "function") onEnd();
       };
-
-      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-        window.speechSynthesis.cancel();
-        // Speaking right after cancel() clips/stutters the start of the new
-        // utterance on most engines — a short delay lets it fully reset first.
-        setTimeout(() => window.speechSynthesis.speak(utterance), 60);
-      } else {
-        window.speechSynthesis.speak(utterance);
-      }
+      window.speechSynthesis.speak(utterance);
     }
 
     function startGame() {
