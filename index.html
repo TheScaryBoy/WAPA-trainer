@@ -1261,13 +1261,18 @@
         : "The single-operation question stays hidden in Real Test mode and is spoken only once.";
 
       const spokenPrompt = q.speech;
-      // Short pause before speaking gives the iPhone speech engine time to
-      // settle, which reduces the stutter at the start of each phrase.
-      const idxAtLoad = state.questionIndex;
-      setTimeout(() => {
-        if (state.questionIndex !== idxAtLoad) return;
-        speak(spokenPrompt, enableAnswering);
-      }, 700);
+      // iOS lets the speech audio session go idle while the user is answering,
+      // so the next utterance starts cold and its first syllable stutters.
+      // Waiting longer only makes it colder. Instead, queue a near-silent
+      // warm-up utterance (same voice) directly ahead of the real one, exactly
+      // like the start-button primer that makes question 1 sound clean.
+      if ("speechSynthesis" in window) {
+        const warmUp = new SpeechSynthesisUtterance(" ");
+        warmUp.volume = 0.01;
+        if (state.preferredVoice) warmUp.voice = state.preferredVoice;
+        window.speechSynthesis.speak(warmUp);
+      }
+      speak(spokenPrompt, enableAnswering);
     }
 
     function sanitizeIntegerInput(value) {
