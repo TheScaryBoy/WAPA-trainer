@@ -1169,27 +1169,28 @@
         return;
       }
 
-      // No cancel() here: each question is only spoken after the previous
-      // one's onend fires (answering stays disabled until then), so there's
-      // never anything mid-speech to interrupt. Cancelling anyway was what
-      // caused the stutter at the start of every phrase.
+      // iOS Safari sometimes never fires onend, which would leave the answer
+      // box locked forever. Guard so onEnd runs exactly once, and add a
+      // fallback timer based on text length in case the event never arrives.
+      let finished = false;
+      let fallbackTimer = null;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        if (typeof onEnd === "function") onEnd();
+      };
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.pitch = 1;
       utterance.volume = 1;
       if (state.preferredVoice) utterance.voice = state.preferredVoice;
-      utterance.onend = () => {
-        if (typeof onEnd === "function") onEnd();
-      };
-      utterance.onerror = () => {
-        if (typeof onEnd === "function") onEnd();
-      };
+      utterance.onend = finish;
+      utterance.onerror = finish;
+
+      fallbackTimer = setTimeout(finish, 2500 + text.length * 120);
       window.speechSynthesis.speak(utterance);
-      // WebKit/Safari bug workaround: speech frequently glitches/stutters at
-      // the very start of a new utterance unless immediately paused+resumed
-      // right after speak() is called.
-      window.speechSynthesis.pause();
-      window.speechSynthesis.resume();
     }
 
     function startGame() {
