@@ -1185,6 +1185,11 @@
         if (typeof onEnd === "function") onEnd();
       };
       window.speechSynthesis.speak(utterance);
+      // WebKit/Safari bug workaround: speech frequently glitches/stutters at
+      // the very start of a new utterance unless immediately paused+resumed
+      // right after speak() is called.
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
     }
 
     function startGame() {
