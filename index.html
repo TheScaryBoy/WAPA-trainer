@@ -1261,7 +1261,13 @@
         : "The single-operation question stays hidden in Real Test mode and is spoken only once.";
 
       const spokenPrompt = q.speech;
-      speak(spokenPrompt, enableAnswering);
+      // Short pause before speaking gives the iPhone speech engine time to
+      // settle, which reduces the stutter at the start of each phrase.
+      const idxAtLoad = state.questionIndex;
+      setTimeout(() => {
+        if (state.questionIndex !== idxAtLoad) return;
+        speak(spokenPrompt, enableAnswering);
+      }, 700);
     }
 
     function sanitizeIntegerInput(value) {
