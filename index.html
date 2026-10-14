@@ -3175,11 +3175,24 @@ async function runReadyScreen(){ show("ready"); const bar=el("barFill"), out=el(
   return new Promise(res=>{ function tick(now){ const t=Math.min(1,(now-start)/D); bar.style.width=(t*100).toFixed(1)+"%"; out.textContent=((D-(now-start))/1000).toFixed(1)+"s"; if(t&lt;1) requestAnimationFrame(tick); else res(); } requestAnimationFrame(tick); });
 }
 
-async function runPlayback(){ 
+async function runPlayback(){
   show("play");
   const ok = await speakInitialOnce("Initial position: " + state.current.initial);
   if (!ok) chime(0.12, 987);
   await new Promise(r=>setTimeout(r, GAP_AFTER_INITIAL*1000));
+
+  // iOS can silently suspend the AudioContext once speechSynthesis takes over
+  // the audio session for the initial-position line above. If that happens,
+  // the buffer sources we schedule next never make sound even though
+  // scheduling itself doesn't throw — resume (and re-check) before using it.
+  if (ctx.state !== 'running') {
+    try { await ctx.resume(); } catch(e) {}
+  }
+  if (ctx.state !== 'running') {
+    // Some iOS versions need a beat before resume() actually takes effect.
+    await new Promise(r=>setTimeout(r, 80));
+    try { await ctx.resume(); } catch(e) {}
+  }
 
   let t = (ctx.currentTime||0) + 0.05;
   for(const mv of state.current.moves){ const buf = moveBuffers[mv]; t = scheduleBuffer(t, buf) + GAP_BETWEEN_MOVES; }
