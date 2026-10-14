@@ -32,6 +32,10 @@ This app targets **iOS Safari** as its primary platform; it also works in any mo
 - Not affiliated with, endorsed by, or connected to Wizz Air or Wizz Air Pilot Academy in any way.
 - Not a guarantee of passing the real selection tests — just practice.
 
+## Credit
+
+The individual practice tests in this app were provided by other community members, who gave their permission for them to be included here. This project exists to package and maintain them in one place, not to claim authorship of the tests themselves.
+
 ## Maintainer
 
 Built and maintained by **Francesco**, currently the sole maintainer of this project. Questions, bug reports, or anything suspicious (like someone trying to charge for access) — email **ltr.francesco@gmail.com**.
