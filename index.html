@@ -3376,7 +3376,36 @@ show("menu");
   // skip silently if the browser or hosting context doesn't support it.
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function(){
-      navigator.serviceWorker.register("sw.js").catch(function(){});
+      // updateViaCache: "none" makes the browser always fetch sw.js itself
+      // straight from the network when checking for updates, instead of
+      // possibly comparing against a stale copy from its ordinary HTTP
+      // cache. Without this, a future update to sw.js could take longer
+      // than expected to be noticed on some browsers.
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function(reg){
+        // If a new service worker is already waiting (installed but not yet
+        // active) by the time this page loads, activate it right away
+        // instead of waiting for a second reload.
+        if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+        reg.addEventListener("updatefound", function(){
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener("statechange", function(){
+            if (nw.state === "installed" && reg.waiting) {
+              reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            }
+          });
+        });
+      }).catch(function(){});
+
+      // Reload once automatically when a new service worker takes control,
+      // so an update you upload shows up without the user having to know to
+      // force-close and reopen the app.
+      var refreshed = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function(){
+        if (refreshed) return;
+        refreshed = true;
+        window.location.reload();
+      });
     });
   }
 })();
